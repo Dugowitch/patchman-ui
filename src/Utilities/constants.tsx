@@ -1,12 +1,20 @@
 import { BugIcon, EnhancementIcon, FlagIcon, SecurityIcon } from '@patternfly/react-icons';
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { subtractDate } from './Helpers';
+import { SortByDirection } from '@patternfly/react-table';
+import { ListMeta } from './api/patchApiTypes';
+import { InventoryWorkloads } from './SystemsHelpers';
+import { AxiosError } from 'axios';
 
 export const STATUS_REJECTED = 'rejected';
 export const STATUS_LOADING = 'loading';
 export const STATUS_RESOLVED = 'resolved';
 
-export const defaultCompoundSortValues = {
+export type AscDesc = Record<SortByDirection, string>;
+
+export type CompoundSortOptions = Record<string, AscDesc>
+
+export const defaultCompoundSortValues: CompoundSortOptions = {
   operating_system: {
     asc: 'osname,osmajor,osminor',
     desc: '-osname,-osmajor,-osminor',
@@ -17,7 +25,7 @@ export const defaultCompoundSortValues = {
   },
 };
 
-export const templateCompoundSortValues = {
+export const templateCompoundSortValues: CompoundSortOptions = {
   applicable_advisories: {
     asc: 'applicable_rhsa_count,applicable_rhba_count,applicable_rhea_count',
     desc: '-applicable_rhsa_count,-applicable_rhba_count,-applicable_rhea_count',
@@ -28,7 +36,54 @@ export const templateCompoundSortValues = {
   },
 };
 
-export const storeListDefaults = {
+export type AdvisoryStatus = 'Applicable' | 'Installable';
+export type UpdateStatus = 'Applicable' | 'Installable' | 'None'
+
+// TODO: might want to eventually refactor this as boolean
+// This is kind of a dirty workaround. When converting to TS, the codebase used mix of
+// true/false and "true"/"false" that was unified on the string version, because boolean
+// caused way too many issues and would require separate refacotr itself. For example, 
+// PF filter component expects it as strings, guart and safety `||` syntax worked with
+// `"false"` but not with `false` (because Boolean("false") is true), URL query strings
+// do not care, and a chip expects string as well.
+export enum SBool {
+  true = 'true',
+  false = 'false',
+}
+
+export type Set = Record<string, true>;
+
+// selectedRows values are a dual-purpose contract:
+// - `true` for pages where only selection state is needed
+// - the remediation payload (EVRA, advisory ID, ...) for pages whose
+//   remediation provider builds issue IDs from per-row data
+// TODO: we might want to fix this later and use Set for selected
+// and something else for the payload
+export type SelectedRows = Record<string, true | string>;
+
+export interface FetchError {
+  title: string;
+  detail: string;
+  status: number;
+}
+
+export interface StoreStatus {
+  isLoading: boolean;
+  code?: number;
+  hasError?: boolean;
+}
+
+export interface ListStore<T> {
+  rows: T[];
+  status?: StoreStatus
+  metadata?: ListMeta | {};
+  expandedRows?: Set;
+  selectedRows: SelectedRows;
+  queryParams: QueryParams;
+  error?: FetchError | Partial<AxiosError>;
+}
+
+export const storeListDefaults: ListStore<any> = {
   rows: [],
   status: { isLoading: true },
   metadata: {
@@ -45,23 +100,68 @@ export const storeListDefaults = {
   error: {},
 };
 
-export const systemPackagesDefaultFilters = {
+export type FilterValue1 = string | number | SBool | AdvisoryType | Severity | UpdateStatus
+export type FilterValue2 = string[] | number[] | SBool[] | AdvisoryType[] | Severity[] | UpdateStatus[]
+export type FilterValue = FilterValue1 | FilterValue2
+
+export type FilterEntries = Record<string, FilterValue>
+
+export interface SystemPaginationQueryParams {
+  page: number
+  perPage: number
+}
+
+export interface DefaultPaginationQueryParams {
+  limit?: number;
+  offset?: number;
+}
+
+export interface BaseQueryParams {
+  filter?: FilterEntries
+  sort?: string
+  search?: string
+}
+
+export interface AdditionalQueryParams {
+  systemProfile?: InventoryWorkloads;
+  selectedTags?: string[];
+}
+
+export type QueryParams = BaseQueryParams & (DefaultPaginationQueryParams | SystemPaginationQueryParams) & AdditionalQueryParams
+
+export interface Filter {
+  filter?: FilterEntries
+  search?: string
+}
+
+export const systemPackagesDefaultFilters: Filter = {
   filter: { update_status: ['Installable'] },
 };
 
-export const packagesListDefaultFilters = {
+export const packagesListDefaultFilters: Filter = {
   filter: { systems_applicable: ['gt:0'] },
 };
 
-export const systemsListDefaultFilters = {
+export const systemsListDefaultFilters: Filter = {
   filter: {},
 };
 
-export const emptyDefaultFilters = {
+export const emptyDefaultFilters: Filter = {
   filter: {},
 };
 
-export const pageDefaultFilters = {
+export interface PageFilters {
+  advisories: Filter;
+  advisorySystems: Filter;
+  cves: Filter;
+  packages: Filter;
+  packageSystems: Filter;
+  systemAdvisories: Filter;
+  systemPackages: Filter;
+  systems: Filter;
+}
+
+export const pageDefaultFilters: PageFilters = {
   advisories: emptyDefaultFilters,
   advisorySystems: emptyDefaultFilters,
   cves: emptyDefaultFilters,
@@ -72,7 +172,7 @@ export const pageDefaultFilters = {
   systems: systemsListDefaultFilters,
 };
 
-export const publicDateOptions = [
+export const publicDateOptions: Array<ValueLabel> = [
   {
     apiValue: `gt:${subtractDate(7)}`,
     label: 'Last 7 days',
@@ -100,13 +200,19 @@ export const publicDateOptions = [
   },
 ];
 
-export const SEVERITY_NONE = null;
-export const SEVERITY_MINOR = 1;
-export const SEVERITY_MODERATE = 2;
-export const SEVERITY_IMPORTANT = 3;
-export const SEVERITY_CRITICAL = 4;
+export type Severity = null | 1 | 2 | 3 | 4;
+export const SEVERITY_NONE: Severity = null;
+export const SEVERITY_MINOR: Severity = 1;
+export const SEVERITY_MODERATE: Severity = 2;
+export const SEVERITY_IMPORTANT: Severity = 3;
+export const SEVERITY_CRITICAL: Severity = 4;
 
-export const advisorySeverities = [
+export interface AdvisorySeverityData extends ValueLabel<Severity> {
+  color: string;
+  text?: string;
+}
+
+export const advisorySeverities: Array<AdvisorySeverityData> = [
   {
     value: SEVERITY_NONE,
     label: 'None',
@@ -155,12 +261,18 @@ export const advisorySeverities = [
   },
 ];
 
-export const TYPE_SECURITY = 'security';
-export const TYPE_BUGFIX = 'bugfix';
-export const TYPE_ENHANCEMENT = 'enhancement';
-export const TYPE_OTHER = 'other';
+export type AdvisoryType = 'security' | 'bugfix' | 'enhancement' | 'other';
 
-export const advisoryTypes = [
+export const TYPE_SECURITY: AdvisoryType = 'security';
+export const TYPE_BUGFIX: AdvisoryType = 'bugfix';
+export const TYPE_ENHANCEMENT: AdvisoryType = 'enhancement';
+export const TYPE_OTHER: AdvisoryType = 'other';
+
+export interface AdvisoryTypeData extends ValueLabel<AdvisoryType> {
+  icon: ReactNode;
+}
+
+export const advisoryTypes: Array<AdvisoryTypeData> = [
   {
     value: TYPE_SECURITY,
     label: 'Security',
@@ -183,7 +295,13 @@ export const advisoryTypes = [
   },
 ];
 
-export const updatableTypes = [
+export interface ValueLabel<T = string> {
+  value: T;
+  label: string;
+  apiValue?: T;
+}
+
+export const updatableTypes: Array<ValueLabel<UpdateStatus>> = [
   {
     value: 'None',
     label: 'Up to date',
@@ -198,7 +316,7 @@ export const updatableTypes = [
   },
 ];
 
-export const advisoryStatuses = [
+export const advisoryStatuses: Array<ValueLabel<AdvisoryStatus>> = [
   {
     value: 'Installable',
     label: 'Installable',
@@ -209,7 +327,7 @@ export const advisoryStatuses = [
   },
 ];
 
-export const packagesListUpdatableTypes = [
+export const packagesListUpdatableTypes: Array<ValueLabel> = [
   {
     value: 'eq:0',
     label: 'Systems up to date',
@@ -220,7 +338,7 @@ export const packagesListUpdatableTypes = [
   },
 ];
 
-export const workloadOptions = [
+export const workloadOptions: Array<ValueLabel> = [
   { label: 'Ansible Automation Platform', value: 'ansible' },
   { label: 'CrowdStrike', value: 'crowdstrike' },
   { label: 'IBM DB2', value: 'ibm_db2' },
@@ -232,29 +350,50 @@ export const workloadOptions = [
   { label: 'Satellite', value: 'satellite' },
 ];
 
-export const staleSystems = [
+export const staleSystems: Array<ValueLabel<SBool>> = [
   {
-    value: true,
+    value: SBool.true,
     label: 'Stale',
   },
   {
-    value: false,
+    value: SBool.false,
     label: 'Fresh',
   },
 ];
 
-export const rebootRequired = [
+export const rebootRequired: Array<ValueLabel<SBool>> = [
   {
-    value: true,
+    value: SBool.true,
     label: 'Required',
   },
   {
-    value: false,
+    value: SBool.false,
     label: 'Not required',
   },
 ];
 
-export const filterCategories = {
+export interface FilterCategory {
+  label: string;
+  values?: Array<AdvisoryTypeData | AdvisorySeverityData | ValueLabel | ValueLabel<SBool>>;
+}
+export interface FilterCategories {
+  advisory_type_name: FilterCategory;
+  severity: FilterCategory;
+  public_date: FilterCategory;
+  update_status: FilterCategory;
+  systems_applicable: FilterCategory;
+  packages_updatable: FilterCategory;
+  stale: FilterCategory;
+  reboot_required: FilterCategory;
+  os: FilterCategory;
+  creator: FilterCategory;
+  status: FilterCategory;
+  group_name: FilterCategory;
+  installed_evra: FilterCategory;
+  workloads: FilterCategory;
+}
+
+export const filterCategories: FilterCategories = {
   advisory_type_name: {
     label: 'Type',
     values: advisoryTypes,
@@ -309,7 +448,12 @@ export const filterCategories = {
   },
 };
 
-export const entityTypes = {
+interface EntityTypes {
+  advisories: 'advisories';
+  packages: 'packages';
+}
+
+export const entityTypes: EntityTypes = {
   advisories: 'advisories',
   packages: 'packages',
 };
@@ -324,7 +468,18 @@ export const remediationIdentifiers = {
   advisory: 'patch-advisory',
 };
 
-export const exportNotifications = (format) => ({
+export interface NotificationStateOption {
+  title: string;
+  variant: string;
+}
+
+export interface NotificationStates {
+  pending: NotificationStateOption;
+  success: NotificationStateOption;
+  error: NotificationStateOption;
+}
+
+export const exportNotifications = (format?: string): NotificationStates => ({
   pending: {
     title: `Preparing export of ${format?.toUpperCase()} format. Once complete, your download will start automatically.`,
     variant: 'info',
@@ -339,7 +494,13 @@ export const exportNotifications = (format) => ({
   },
 });
 
-export const multiValueFilters = ['installed_evra', 'os', 'creator', 'status', 'group_name'];
+export const multiValueFilters: Array<string> = [
+  'installed_evra',
+  'os',
+  'creator',
+  'status',
+  'group_name',
+];
 
 export const KESSEL_API_BASE_URL = '/api/kessel/v1beta2';
 
