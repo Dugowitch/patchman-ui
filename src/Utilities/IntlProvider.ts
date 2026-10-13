@@ -1,14 +1,6 @@
-import { createIntl, createIntlCache } from 'react-intl';
+import { createIntl, createIntlCache, IntlCache, IntlShape } from 'react-intl';
 
-const cache = createIntlCache();
-const locale = navigator.language.slice(0, 2);
+const cache: IntlCache = createIntlCache();
+const locale: string = navigator.language.slice(0, 2);
 
-export const intl = createIntl(
-  {
-    onError: console.log,
-    locale,
-  },
-  cache,
-);
-
-export const intlSettings = { locale };
+export const intl: IntlShape = createIntl({ onError: console.log, locale }, cache);
