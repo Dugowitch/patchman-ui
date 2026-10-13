@@ -1,6 +1,6 @@
 import { processDate } from '@redhat-cloud-services/frontend-components-utilities/helpers';
 import { flatMap } from 'lodash';
-import React from 'react';
+import React, { JSX } from 'react';
 import messages from '../Messages';
 import AdvisoryType from '../PresentationalComponents/AdvisoryType/AdvisoryType';
 import { DescriptionWithLink } from '../PresentationalComponents/Snippets/DescriptionWithLink';
@@ -20,6 +20,31 @@ import {
 } from './Helpers';
 import { intl } from './IntlProvider';
 import AdvisorySeverity from '../PresentationalComponents/AdvisorySeverity/AdvisorySeverity';
+
+export interface TCells<T = never> {
+  cells: Array<{
+    title: JSX.Element | number | string;
+    value?: T;
+    props?: Record<string, unknown>;
+  }>;
+}
+
+export interface TRow<T = never> extends TCells<T> {
+  id: string;
+  key: string;
+  isOpen?: boolean;
+  selected?: boolean;
+}
+
+// every second row in expandable table; shown when the first row is expanded
+export interface TExpandableRow extends TCells {
+  parent: number;
+  isExpandedRow: boolean;
+}
+
+export interface TEmptyRow extends TCells {
+  heightAuto: boolean;
+}
 
 export const createAdvisoriesRows = (rows, expandedRows, selectedRows) => {
   if (rows.length !== 0) {
