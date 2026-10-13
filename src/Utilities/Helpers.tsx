@@ -29,6 +29,7 @@ import {
 import { intl } from './IntlProvider';
 import { generateFilter } from '@redhat-cloud-services/frontend-components-utilities/helpers';
 import { InsightsLink } from '@redhat-cloud-services/frontend-components/InsightsLink';
+import { InventoryWorkloads } from './SystemsHelpers';
 
 export const removeUndefinedObjectItems = (originalObject) => {
   const newObject = JSON.parse(JSON.stringify(originalObject));
@@ -717,7 +718,7 @@ export const buildTagString = (tag) =>
  * sometimes passes tag strings that are already `tags=` segments or percent-encoded and encoding
  * again turns `%2F` into `%252F` and breaks the patch API.
  */
-const buildTagsQuerySegment = (rawTagInput) => {
+const buildTagsQuerySegment = (rawTagInput: string): string => {
   if (rawTagInput === undefined || rawTagInput === null) {
     return '';
   }
@@ -734,44 +735,67 @@ const buildTagsQuerySegment = (rawTagInput) => {
   return `tags=${encodeURIComponent(decoded)}`;
 };
 
-export const mapGlobalFilters = (tags, workloads = {}) => {
-  let tagsInUrlFormat = [];
-  tags &&
-    tags.forEach((tag, index) => {
-      let tagGruop = tag;
-      if (typeof tag === 'object' && tag !== null) {
-        tagGruop = tag?.values.map((value) =>
-          buildTagsQuerySegment(`${tag.category}/${value.tagKey}=${value.value}`),
-        );
-        tagsInUrlFormat[index] = (Array.isArray(tagGruop) && flatten(tagGruop)) || tagGruop;
-      } else if (typeof tag === 'string') {
-        tagsInUrlFormat[index] = buildTagsQuerySegment(tagGruop);
-      }
-    });
+interface TagGroup {
+  category?: string | null;
+  values: {
+    tagKey: string;
+    value?: string;
+  }[]
+}
 
-  const globalFilterConfig = { selectedTags: [], systemProfile: {} };
+const isTagGroup = (value: unknown): value is TagGroup => {
+  if (!isObject(value)) return false;
 
-  globalFilterConfig.systemProfile = {
-    ...(workloads?.SAP?.isSelected && { sap_system: true }),
-    ...(workloads?.['Ansible Automation Platform']?.isSelected && {
-      ansible: { controller_version: 'not_nil' },
-    }),
-    ...(workloads?.['Microsoft SQL']?.isSelected && {
-      mssql: { version: 'not_nil' },
-    }),
-    ...(workloads?.CrowdStrike?.isSelected && { crowdstrike: true }),
-    ...(workloads?.['IBM DB2']?.isSelected && { ibm_db2: true }),
-    ...(workloads?.InterSystems?.isSelected && { intersystems: true }),
-    ...(workloads?.['Oracle DB']?.isSelected && { oracle_db: true }),
-    ...(workloads?.['RHEL AI']?.isSelected && { rhel_ai: true }),
-  };
-
-  if (tagsInUrlFormat?.length) {
-    globalFilterConfig.selectedTags = flatten(tagsInUrlFormat).filter(Boolean);
-  }
-
-  return globalFilterConfig;
+  const obj = value as Record<string, unknown>;
+  return (
+    (obj.category === undefined || obj.category === null || typeof obj.category === 'string') &&
+    Array.isArray(obj.values) &&
+    obj.values.every((value) =>
+      isObject(value) &&
+      typeof (value as Record<string, unknown>).tagKey === 'string' &&
+      (!Object.prototype.hasOwnProperty.call(value, 'value') ||
+        typeof (value as Record<string, unknown>).value === 'string')
+    )
+  );
 };
 
-export const isObject = (variable) =>
-  typeof variable === 'object' && variable !== null ? true : false;
+export interface GlobalFilterConfig {
+  selectedTags: string[];
+  systemProfile: InventoryWorkloads;
+}
+
+export const mapGlobalFilters = (tags: string[] | TagGroup[] | null | undefined, workloads: Record<string, {isSelected: boolean}> = {}): GlobalFilterConfig => {
+  let tagsInUrlFormat: string[] = [];
+  if (tags) {
+    tags.forEach((tag: unknown) => {
+      if (isTagGroup(tag)) {
+        for (let value of tag.values) {
+          tagsInUrlFormat.push(buildTagsQuerySegment(`${tag.category}/${value.tagKey}=${value.value}`))
+        }
+      } else if (typeof tag === 'string') {
+        tagsInUrlFormat.push(buildTagsQuerySegment(tag));
+      }
+    });
+  }
+
+  return {
+    systemProfile: {
+      ...(workloads?.SAP?.isSelected && { sap_system: true }),
+      ...(workloads?.['Ansible Automation Platform']?.isSelected && {
+        ansible: { controller_version: 'not_nil' },
+      }),
+      ...(workloads?.['Microsoft SQL']?.isSelected && {
+        mssql: { version: 'not_nil' },
+      }),
+      ...(workloads?.CrowdStrike?.isSelected && { crowdstrike: true }),
+      ...(workloads?.['IBM DB2']?.isSelected && { ibm_db2: true }),
+      ...(workloads?.InterSystems?.isSelected && { intersystems: true }),
+      ...(workloads?.['Oracle DB']?.isSelected && { oracle_db: true }),
+      ...(workloads?.['RHEL AI']?.isSelected && { rhel_ai: true }),
+    },
+    selectedTags: tagsInUrlFormat.filter(Boolean),
+  };
+};
+
+export const isObject = (variable: unknown): variable is object =>
+  typeof variable === 'object' && variable !== null;
