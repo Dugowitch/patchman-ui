@@ -31,7 +31,7 @@ import AsyncRemediationButton from '../Remediation/AsyncRemediationButton';
 import {
   buildFilterConfig,
   mergeInventoryColumns,
-  workloadToSystemProfile,
+  workloadToSystemInventory,
 } from '../../Utilities/SystemsHelpers';
 import { combineReducers } from 'redux';
 import propTypes from 'prop-types';
@@ -81,7 +81,7 @@ const SystemsTable = ({
   // systemProfile comes from the Chrome global filter; merge local workload selections on top
   const mergedSystemProfile = {
     ...systemProfile,
-    ...workloadToSystemProfile(workloadFilter || []),
+    ...workloadToSystemInventory(workloadFilter || []),
   };
   const osFilter = operatingSystemFilter && [
     {

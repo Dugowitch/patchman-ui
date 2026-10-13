@@ -3,7 +3,22 @@ import systemsUpdatableFilter from '../PresentationalComponents/Filters/SystemsU
 import systemsWorkloadFilter from '../PresentationalComponents/Filters/WorkloadFilter';
 import { defaultCompoundSortValues } from './constants';
 
-export const workloadToSystemProfile = (workloads = []) => ({
+export interface InventoryWorkloads {
+  sap_system?: boolean;
+  sap_sids?: string[];
+  ansible?: boolean | { controller_version: string };
+  mssql?: boolean | { version: string };
+  crowdstrike?: boolean;
+  ibm_db2?: boolean;
+  intersystems?: boolean;
+  oracle_db?: boolean;
+  rhel_ai?: boolean;
+  satellite?: boolean;
+}
+
+export const workloadToSystemInventory = (
+  workloads: string[] = [],
+): InventoryWorkloads => ({
   ...(workloads.includes('sap') && { sap_system: true }),
   ...(workloads.includes('ansible') && { ansible: { controller_version: 'not_nil' } }),
   ...(workloads.includes('mssql') && { mssql: { version: 'not_nil' } }),

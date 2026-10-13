@@ -3,7 +3,7 @@ import {
   buildFilterConfig,
   createSystemsSortBy,
   mergeInventoryColumns,
-  workloadToSystemProfile,
+  workloadToSystemInventory,
 } from './SystemsHelpers';
 
 describe('createSystemsSortBy,', () => {
@@ -122,49 +122,49 @@ describe('mergeInventoryColumns', () => {
   });
 });
 
-describe('workloadToSystemProfile', () => {
+describe('workloadToSystemInventory', () => {
   it('should return empty object for empty workloads', () => {
-    expect(workloadToSystemProfile([])).toEqual({});
+    expect(workloadToSystemInventory([])).toEqual({});
   });
 
   it('should map sap to sap_system', () => {
-    expect(workloadToSystemProfile(['sap'])).toEqual({ sap_system: true });
+    expect(workloadToSystemInventory(['sap'])).toEqual({ sap_system: true });
   });
 
   it('should map ansible to ansible controller_version', () => {
-    expect(workloadToSystemProfile(['ansible'])).toEqual({
+    expect(workloadToSystemInventory(['ansible'])).toEqual({
       ansible: { controller_version: 'not_nil' },
     });
   });
 
   it('should map mssql to mssql version', () => {
-    expect(workloadToSystemProfile(['mssql'])).toEqual({
+    expect(workloadToSystemInventory(['mssql'])).toEqual({
       mssql: { version: 'not_nil' },
     });
   });
 
   it('should map crowdstrike', () => {
-    expect(workloadToSystemProfile(['crowdstrike'])).toEqual({ crowdstrike: true });
+    expect(workloadToSystemInventory(['crowdstrike'])).toEqual({ crowdstrike: true });
   });
 
   it('should map ibm_db2', () => {
-    expect(workloadToSystemProfile(['ibm_db2'])).toEqual({ ibm_db2: true });
+    expect(workloadToSystemInventory(['ibm_db2'])).toEqual({ ibm_db2: true });
   });
 
   it('should map intersystems', () => {
-    expect(workloadToSystemProfile(['intersystems'])).toEqual({ intersystems: true });
+    expect(workloadToSystemInventory(['intersystems'])).toEqual({ intersystems: true });
   });
 
   it('should map oracle_db', () => {
-    expect(workloadToSystemProfile(['oracle_db'])).toEqual({ oracle_db: true });
+    expect(workloadToSystemInventory(['oracle_db'])).toEqual({ oracle_db: true });
   });
 
   it('should map rhel_ai', () => {
-    expect(workloadToSystemProfile(['rhel_ai'])).toEqual({ rhel_ai: true });
+    expect(workloadToSystemInventory(['rhel_ai'])).toEqual({ rhel_ai: true });
   });
 
   it('should map multiple workloads at once', () => {
-    expect(workloadToSystemProfile(['sap', 'ansible', 'mssql', 'crowdstrike'])).toEqual({
+    expect(workloadToSystemInventory(['sap', 'ansible', 'mssql', 'crowdstrike'])).toEqual({
       sap_system: true,
       ansible: { controller_version: 'not_nil' },
       mssql: { version: 'not_nil' },
