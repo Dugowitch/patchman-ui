@@ -28,12 +28,13 @@ import {
   Severity,
   CompoundSortOptions,
   UpdateStatus,
+  SelectedRows,
 } from './constants';
 import { intl } from './IntlProvider';
 import { generateFilter } from '@redhat-cloud-services/frontend-components-utilities/helpers';
 import { InsightsLink } from '@redhat-cloud-services/frontend-components/InsightsLink';
 import { ColumnDefinition, OSFilter__InventoryTable, InventoryWorkloads } from './SystemsHelpers';
-import { CvesRows } from './DataMappers';
+import { CvesRows, SystemOS } from './DataMappers';
 import { PackageSystemItem, PackageSystemsResponse } from './api/patchApiTypes';
 
 export const removeUndefinedObjectItems = <T,>(originalObject: T): T => {
@@ -78,24 +79,36 @@ export const createSortBy = (
   return sort;
 };
 
-export const addOrRemoveItemFromSet = (targetObj, inputArr) => {
-  const inputObj = inputArr.reduce(
-    (obj, item) => ((obj[item.rowId] = item.value || undefined), obj),
-    {},
-  );
-  const result = { ...targetObj, ...inputObj };
+export const addOrRemoveItemFromSet = <T,>(
+  targetObj: Record<string, T>,
+  inputArr: Array<{ rowId: string; value: T | false }>,
+): Record<string, T> => {
+  const result = { ...targetObj }
+  for (const {rowId, value} of inputArr) {
+    if (value) {
+      result[rowId] = value
+      continue
+    }
+    delete result[rowId]
+  }
   return result;
 };
 
-export const getNewSelectedItems = (selectedItems, currentItems) => {
-  let payload = [].concat(selectedItems).map((item) => ({ rowId: item.id, value: item.selected }));
+export type SelectedItems = Array<{ id: string; selected: boolean | string }>;
+export const getNewSelectedItems = (selectedItems: SelectedItems, currentItems: SelectedRows): SelectedRows => {
+  let payload = ([] as SelectedItems)
+    .concat(selectedItems)
+    .map((item) => ({ rowId: item.id, value: item.selected }));
   const mergedSelection = addOrRemoveItemFromSet(currentItems, payload);
 
   return pickBy(mergedSelection, (v) => !!v);
 };
 
 // for expandable rows only
-export const getRowIdByIndexExpandable = (arrayOfObjects, index) => arrayOfObjects[index / 2].id;
+export const getRowIdByIndexExpandable = (
+  arrayOfObjects: Array<{ id: string }>,
+  index: number,
+): string => arrayOfObjects[index / 2].id;
 
 export const getOffsetFromPageLimit = (page: number, limit: number): number => page * limit - limit;
 
@@ -239,9 +252,17 @@ export const handlePatchLink = (type: 'advisories' | 'packages', name: string, b
 export const arrayFromObj = <T,>(items: { [s: string]: T } | ArrayLike<T>): T[] =>
   Object.values(items).filter((value) => value);
 
-export const remediationProvider = (issues, systems, remediationIdentifier) => {
-  issues = [].concat(issues);
-  systems = [].concat(systems);
+export interface RemediationsIssues {
+  issues: Array<{ id: string; description: string }>;
+  systems: string[];
+}
+export const remediationProvider = (
+  issues: string | string[],
+  systems: string | string[],
+  remediationIdentifier: string,
+): RemediationsIssues | false => {
+  issues = ([] as string[]).concat(issues);
+  systems = ([] as string[]).concat(systems);
   return issues.length && systems.length
     ? {
         issues: issues.map((item) => ({
@@ -253,7 +274,11 @@ export const remediationProvider = (issues, systems, remediationIdentifier) => {
     : false;
 };
 
-export const remediationProviderWithPairs = (issuePairs, transformFunc, remediationIdentifier) =>
+export const remediationProviderWithPairs = (
+  issuePairs: string[],
+  transformFunc: (x: string[], y: string) => RemediationsIssues,
+  remediationIdentifier: string,
+): RemediationsIssues | false =>
   issuePairs ? transformFunc(issuePairs, remediationIdentifier) : false;
 
 export const getFilterValue = (category, key) => {
@@ -272,17 +297,15 @@ export const getFilterValue = (category, key) => {
 const getFilterStringFromApi = (value: any): string =>
   value === null ? 'null' : String(value);
 
+const calculateWorkloads = (systemProfile: InventoryWorkloads): string => {
+  let result = '';
+  Object.entries(generateFilter({ system_profile: systemProfile })).forEach(
+    ([key, value]) => (result = `${result}&${key}=${value}`),
+  );
+  return result;
+};
+
 export const encodeParams = (parameters, shouldTranslateKeys) => {
-  const calculateWorkloads = (systemProfile) => {
-    let result = '';
-    Object.entries(generateFilter({ system_profile: systemProfile })).forEach((entry) => {
-      const [key, value] = entry;
-      result = `${result}&${key}=${value}`;
-    });
-
-    return result;
-  };
-
   const flattenFilters = (filter) => {
     let result = {};
     filter &&
@@ -652,7 +675,7 @@ export function sortCves(cves: CvesRows, index: number, direction: SortByDirecti
   };
 }
 
-export const createOSColumn = ({ osName, rhsm }) => {
+export const createOSColumn = ({ osName, rhsm }: SystemOS): ReactNode => {
   // replace the last space with nbsp;
   // this assumes the last space in `osName` string separates name from version like "RHEL 9.10" or "CentOS Linux 7.10"
   osName = osName.replace(/ (?!.* )/, '\u00A0');
@@ -668,14 +691,14 @@ export const createOSColumn = ({ osName, rhsm }) => {
       >
         <span className='pf-v6-u-text-nowrap'>
           {'\u200d'}
-          <LockIcon size='sm' className='pf-v6-u-mx-xs' data-testid='tooltip-target' />
+          <LockIcon className='pf-v6-u-mx-xs' data-testid='tooltip-target' />
         </span>
       </Tooltip>
     </span>
   );
 };
 
-export const removeUndefinedObjectKeys = (selectedRows) =>
+export const removeUndefinedObjectKeys = (selectedRows: SelectedRows): string[] =>
   Object.keys(selectedRows).filter((row) => selectedRows[row]);
 
 export const prepareEntitiesParams = (parameters) => {
