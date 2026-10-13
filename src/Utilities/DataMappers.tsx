@@ -10,7 +10,7 @@ import {
   EmptyPackagesList,
 } from '../PresentationalComponents/Snippets/EmptyStates';
 import { SystemUpToDate } from '../PresentationalComponents/Snippets/SystemUpToDate';
-import { entityTypes, Severity } from './constants';
+import { entityTypes, SelectedRows, Set, Severity } from './constants';
 import {
   createUpgradableColumn,
   getSeverityByCveImpact,
@@ -21,6 +21,8 @@ import {
 import { intl } from './IntlProvider';
 import AdvisorySeverity from '../PresentationalComponents/AdvisorySeverity/AdvisorySeverity';
 import { CveItem } from './api/vulnerabilityApi';
+import { AdvisoryItem, ListMeta } from './api/patchApiTypes';
+import { SystemAdvisoryItem } from './api/patchApiTypes';
 
 export interface TCells<T = never> {
   cells: Array<{
@@ -47,11 +49,18 @@ export interface TEmptyRow extends TCells {
   heightAuto: boolean;
 }
 
-export const createAdvisoriesRows = (rows, expandedRows, selectedRows) => {
+export type AdvisoriesRows = Array<TRow | TExpandableRow> | [TEmptyRow];
+
+export const createAdvisoriesRows = (
+  rows: AdvisoryItem[],
+  expandedRows: Set,
+  selectedRows: SelectedRows,
+): AdvisoriesRows => {
   if (rows.length !== 0) {
     return flatMap(rows, (row, index) => [
       {
         id: row.id,
+        key: row.id,
         isOpen: expandedRows[row.id] === true,
         selected: selectedRows[row.id] !== undefined,
         cells: [
@@ -65,7 +74,7 @@ export const createAdvisoriesRows = (rows, expandedRows, selectedRows) => {
             title: <AdvisoryType type={row.attributes.advisory_type_name} />,
           },
           {
-            title: <AdvisorySeverity severity={row.attributes?.severity} />,
+            title: <AdvisorySeverity severity={row.attributes.severity} />,
           },
           {
             title: handlePatchLink(
@@ -112,11 +121,17 @@ export const createAdvisoriesRows = (rows, expandedRows, selectedRows) => {
   }
 };
 
-export const createSystemAdvisoriesRows = (rows, expandedRows, selectedRows, metadata) => {
+export const createSystemAdvisoriesRows = (
+  rows: SystemAdvisoryItem[],
+  expandedRows: Set,
+  selectedRows: SelectedRows,
+  metadata: ListMeta,
+): AdvisoriesRows => {
   if (rows.length !== 0) {
     return flatMap(rows, (row, index) => [
       {
         id: row.id,
+        key: row.id,
         isOpen: expandedRows[row.id] === true,
         selected: selectedRows[row.id] !== undefined,
         disableSelection: row.attributes.status !== 'Installable',
@@ -142,6 +157,7 @@ export const createSystemAdvisoriesRows = (rows, expandedRows, selectedRows, met
                 intl.formatMessage(messages.labelsRebootRequired)) ||
               intl.formatMessage(messages.labelsRebootNotRequired),
           },
+          // @ts-expect-error TODO: `processDate` does not accept `null` as input
           { title: processDate(row.attributes.public_date) },
         ],
       },

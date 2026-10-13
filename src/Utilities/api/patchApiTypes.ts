@@ -1,3 +1,5 @@
+import { AdvisoryStatus, AdvisoryType, Severity } from "../constants";
+
 // API response common ======================================================== 
 
 export interface Links {
@@ -35,3 +37,37 @@ export interface ResponseItem<T> {
   attributes: T;
 }
 
+// advisories common ==========================================================
+
+export interface AdvisoryAtributesCommon {
+  advisory_type_name: AdvisoryType;
+  cve_count: number;
+  description: string;
+  public_date?: string;
+  reboot_required: boolean;
+  release_versions: string[];
+  severity?: Severity;
+  severity_name?: string;
+  synopsis: string;
+}
+
+// advisories specific ========================================================
+
+export interface AdvisoryAtributes extends AdvisoryAtributesCommon {
+  applicable_systems: number;
+  installable_systems: number;
+}
+
+export type AdvisoryItem = ResponseItem<AdvisoryAtributes>
+
+export type AdvisoriesResponse = Response<AdvisoryItem>
+
+// system advisories specific =================================================
+
+export interface SystemAdvisoryAtributes extends AdvisoryAtributesCommon {
+  status: AdvisoryStatus;
+}
+
+export type SystemAdvisoryItem = ResponseItem<SystemAdvisoryAtributes>
+
+export type SystemAdvisoriesResponse = Response<SystemAdvisoryItem>
