@@ -556,7 +556,7 @@ describe('buildApiFilters', () => {
     const inventoryFilters = {
       osFilter,
     };
-    expect(buildApiFilters(patchFilters, inventoryFilters).os).toEqual('RHEL 8.8,RHEL 8.9');
+    expect(buildApiFilters(patchFilters, inventoryFilters).os).toEqual(['RHEL 8.8', 'RHEL 8.9']);
   });
 });
 

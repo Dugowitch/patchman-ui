@@ -31,7 +31,7 @@ import {
 import { intl } from './IntlProvider';
 import { generateFilter } from '@redhat-cloud-services/frontend-components-utilities/helpers';
 import { InsightsLink } from '@redhat-cloud-services/frontend-components/InsightsLink';
-import { InventoryWorkloads } from './SystemsHelpers';
+import { InventoryWorkloads, OSFilter__InventoryTable } from './SystemsHelpers';
 import { CvesRows } from './DataMappers';
 
 export const removeUndefinedObjectItems = <T,>(originalObject: T): T => {
@@ -562,7 +562,11 @@ export const buildActiveFilterConfig = (
   };
 };
 
-export const buildOsFilter = (osFilter = {}) => {
+export interface OSFilter {
+  os?: string[];
+}
+
+export const buildOsFilter = (osFilter: OSFilter__InventoryTable = {}): OSFilter => {
   const osVersions = Object.entries(osFilter).reduce(
     (acc, [, osGroupValues]) => [
       ...acc,
@@ -573,13 +577,11 @@ export const buildOsFilter = (osFilter = {}) => {
           return keyParts.slice(0, keyParts.length - 2) + ' ' + keyParts[keyParts.length - 1];
         }),
     ],
-    [],
+    ([] as string[]),
   );
 
   return osVersions.length > 0
-    ? {
-        os: osVersions.join(','),
-      }
+    ? { os: osVersions }
     : {};
 };
 

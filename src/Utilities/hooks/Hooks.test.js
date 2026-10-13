@@ -212,7 +212,7 @@ describe('Custom hooks tests', () => {
       filter: {
         stale: [true, false],
         group_name: ['web'],
-        os: 'RHEL 8.8',
+        os: ['RHEL 8.8'],
       },
       filters: params.filters,
       selectedTags: ['tags=owner%2Fteam%3Dplatform', 'tags=env%2Fstage%3Dprod'],
