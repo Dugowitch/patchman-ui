@@ -29,6 +29,13 @@ import {
   CompoundSortOptions,
   UpdateStatus,
   SelectedRows,
+  FilterEntries,
+  FilterValue,
+  FilterValue2,
+  Filter,
+  BaseQueryParams,
+  SystemPaginationQueryParams,
+  DefaultPaginationQueryParams,
 } from './constants';
 import { intl } from './IntlProvider';
 import { generateFilter } from '@redhat-cloud-services/frontend-components-utilities/helpers';
@@ -360,7 +367,7 @@ export const encodeURLParams = (parameters) => {
   return encodeParams(removeUndefinedObjectItems(urlParams), false);
 };
 
-export const decomposeFilterValue = (filterValue, parser) => {
+export const decomposeFilterValue = <T, >(filterValue: T, parser: ((x: T) => any) | undefined): any => {
   if (parser) {
     return parser(filterValue);
   } else if (typeof filterValue === 'string' && filterValue.startsWith('in:')) {
@@ -371,7 +378,7 @@ export const decomposeFilterValue = (filterValue, parser) => {
   }
 };
 
-const getApiValueFromFilterString = (value) => {
+const getApiValueFromFilterString = (value: unknown) => {
   if (Array.isArray(value)) {
     return value.map(getApiValueFromFilterString);
   }
@@ -379,37 +386,41 @@ const getApiValueFromFilterString = (value) => {
   return value === 'null' ? null : value;
 };
 
-export const decodeQueryparams = (queryString, parsers = {}) => {
+export const decodeQueryparams = (queryString: string, parsers: Record<string, (x: unknown) => any> = {}): Partial<BaseQueryParams & (DefaultPaginationQueryParams | SystemPaginationQueryParams)> => {
   const parsed = qs.parse(queryString);
   const res = {};
-  Object.keys(parsed).forEach((key) => {
-    if (!key.startsWith('filter[system_profile]')) {
-      const convertedToInt = parseInt(parsed[key], 10);
-      const typeHandledParam = isNaN(convertedToInt) ? parsed[key] : convertedToInt;
-      const bracketIndex = key.search(/\[.*\]/);
-      if (bracketIndex > 0) {
-        const objParent = key.slice(0, bracketIndex);
-        const objKey = key.slice(bracketIndex + 1, -1);
-        const parser = parsers[objKey];
-        const decomposedValue = decomposeFilterValue(typeHandledParam, parser);
-        const normalizedValue =
-          objParent === 'filter' ? getApiValueFromFilterString(decomposedValue) : decomposedValue;
-        res[objParent] = {
-          ...res[objParent],
-          [objKey]: normalizedValue,
-        };
-      } else {
-        res[key] = typeHandledParam;
-      }
+  for (const key in parsed){
+    if (key.startsWith('filter[system_profile]')) {
+      continue
     }
-  });
+
+    const convertedToInt = parseInt(String(parsed[key]), 10);
+    const typeHandledParam = isNaN(convertedToInt) ? parsed[key] : convertedToInt;
+
+    const bracketIndex = key.search(/\[.*\]/);
+    if (bracketIndex <= 0) {
+      res[key] = typeHandledParam;
+      continue
+    }
+
+    const objParent = key.slice(0, bracketIndex);
+    const objKey = key.slice(bracketIndex + 1, -1);
+    const parser = parsers[objKey];
+    const decomposedValue = decomposeFilterValue(typeHandledParam, parser);
+    const normalizedValue =
+      objParent === 'filter' ? getApiValueFromFilterString(decomposedValue) : decomposedValue;
+    res[objParent] = {
+      ...res[objParent],
+      [objKey]: normalizedValue,
+    };
+  }
   return res;
 };
 
 const compareNormalizedValues = (left: any, right: any): number =>
   getFilterStringFromApi(left).localeCompare(getFilterStringFromApi(right));
 
-const normalizeFilterComparisonValue = (category, value) => {
+const normalizeFilterComparisonValue = (category: string, value: unknown) => {
   if (Array.isArray(value)) {
     return [...value]
       .map((item) => normalizeFilterComparisonValue(category, item))
@@ -423,20 +434,20 @@ const normalizeFilterComparisonValue = (category, value) => {
   return value;
 };
 
-const areFilterValuesEqual = (category, currentValue, defaultValue) =>
+const areFilterValuesEqual = (category: string, currentValue: FilterValue, defaultValue: FilterValue): boolean =>
   JSON.stringify(normalizeFilterComparisonValue(category, currentValue)) ===
   JSON.stringify(normalizeFilterComparisonValue(category, defaultValue));
 
-const sanitizeFilterState = (filters = {}) =>
-  Object.entries(filters).reduce((activeFilters, [category, value]) => {
-    if (value !== undefined && value !== '' && [].concat(value).length !== 0) {
+const sanitizeFilterState = (filters: FilterEntries = {}): FilterEntries =>
+  Object.entries(filters).reduce((activeFilters: FilterEntries, [category, value]) => {
+    if (value !== undefined && value !== '' && ([] as FilterValue2).concat(value).length !== 0) {
       activeFilters[category] = value;
     }
 
     return activeFilters;
   }, {});
 
-const hasActiveNestedFilterValue = (value) => {
+const hasActiveNestedFilterValue = (value: any): boolean => {
   if (Array.isArray(value)) {
     return value.some(hasActiveNestedFilterValue);
   }
@@ -448,28 +459,28 @@ const hasActiveNestedFilterValue = (value) => {
   return ![undefined, null, '', false].includes(value);
 };
 
-export const getDefaultFilterState = (defaultFilters = emptyDefaultFilters) => ({
+export const getDefaultFilterState = (defaultFilters: Filter = emptyDefaultFilters): Required<Filter> => ({
   filter: sanitizeFilterState(defaultFilters?.filter ?? {}),
-  search: defaultFilters?.search ?? '',
+  search: defaultFilters.search ?? '',
 });
 
-export const hasActiveInventoryFilters = (filters = {}) => hasActiveNestedFilterValue(filters);
+export const hasActiveInventoryFilters = (filters: Record<string, unknown> = {}) => hasActiveNestedFilterValue(filters);
 
-export const hasDefaultFilterState = (defaultFilters = emptyDefaultFilters) => {
+export const hasDefaultFilterState = (defaultFilters: Filter = emptyDefaultFilters): boolean => {
   const { filter, search } = getDefaultFilterState(defaultFilters);
 
   return Object.keys(filter).length > 0 || search !== '';
 };
 
 export const getActiveFilterState = (
-  filters = {},
-  search = '',
-  defaultFilters = emptyDefaultFilters,
-) => {
+  filters: FilterEntries = {},
+  search: string = '',
+  defaultFilters: Filter = emptyDefaultFilters,
+): Required<Filter> & {hasDefaultFilterState: boolean} => {
   const sanitizedFilters = sanitizeFilterState(filters);
   const { filter: defaultFilter, search: defaultSearch } = getDefaultFilterState(defaultFilters);
 
-  const activeFilters = Object.keys(sanitizedFilters).reduce((currentFilters, category) => {
+  const activeFilters = Object.keys(sanitizedFilters).reduce((currentFilters: FilterEntries, category: string) => {
     const currentValue = sanitizedFilters[category];
     const defaultValue = defaultFilter[category];
 
@@ -560,12 +571,12 @@ export const buildFilterChips = (filters, search, searchChipLabel = 'Search', pa
 };
 
 export const buildActiveFilterConfig = (
-  filters,
-  search,
-  deleteFilters,
-  deleteFilterGroup,
-  searchChipLabel = 'Search',
-  defaultFilters = emptyDefaultFilters,
+  filters: FilterEntries,
+  search: string,
+  deleteFilters: (...args: unknown[]) => void,
+  deleteFilterGroup: (...args: unknown[]) => void,
+  searchChipLabel: string = 'Search',
+  defaultFilters: Filter = emptyDefaultFilters,
 ) => {
   const visibleFilters = sanitizeFilterState(filters);
   const visibleSearch = search ?? '';
@@ -610,7 +621,12 @@ export const buildOsFilter = (osFilter: OSFilter__InventoryTable = {}): OSFilter
     : {};
 };
 
-export const buildApiFilters = (patchFilters, inventoryFilters) => ({
+interface InventoryFilters {
+  hostGroupFilter?: string[]
+  osFilter?: OSFilter__InventoryTable 
+}
+
+export const buildApiFilters = (patchFilters: FilterEntries, inventoryFilters: InventoryFilters): FilterEntries => ({
   ...patchFilters,
   ...(Array.isArray(inventoryFilters.hostGroupFilter) && inventoryFilters.hostGroupFilter.length > 0
     ? { group_name: inventoryFilters.hostGroupFilter }
@@ -733,7 +749,9 @@ export const filterRemediatablePackageSystems = (result: PackageSystemsResponse)
   data: result.data.filter((system: PackageSystemItem) => system.updatable),
 });
 
-export const persistantParams = (patchParams, decodedParams) => {
+export const persistantParams = (patchParams: SystemPaginationQueryParams & Omit<BaseQueryParams, 'filter'>, decodedParams: Partial<BaseQueryParams & (DefaultPaginationQueryParams | SystemPaginationQueryParams)>): SystemPaginationQueryParams & {
+  sortBy?: {key: string, direction: SortByDirection}
+} => {
   const persistantParams = { ...patchParams, ...decodedParams };
 
   if (typeof persistantParams.sort === 'string' && persistantParams.sort.match(/-?groups/)) {
