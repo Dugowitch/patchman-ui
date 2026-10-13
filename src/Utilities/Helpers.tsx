@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Dispatch, JSX, ReactNode, SetStateAction } from 'react';
 import { Flex, FlexItem, Tooltip } from '@patternfly/react-core';
 import {
   BugIcon,
@@ -7,8 +7,7 @@ import {
   LockIcon,
   SecurityIcon,
 } from '@patternfly/react-icons';
-import { SortByDirection } from '@patternfly/react-table';
-import flatten from 'lodash/flatten';
+import { ISortBy, SortByDirection } from '@patternfly/react-table';
 import findIndex from 'lodash/findIndex';
 import pickBy from 'lodash/pickBy';
 import qs from 'query-string';
@@ -25,19 +24,26 @@ import {
   SEVERITY_IMPORTANT,
   SEVERITY_MINOR,
   SEVERITY_MODERATE,
+  AdvisoryStatus,
+  Severity,
+  UpdateStatus,
 } from './constants';
 import { intl } from './IntlProvider';
 import { generateFilter } from '@redhat-cloud-services/frontend-components-utilities/helpers';
 import { InsightsLink } from '@redhat-cloud-services/frontend-components/InsightsLink';
 import { InventoryWorkloads } from './SystemsHelpers';
+import { CvesRows } from './DataMappers';
 
-export const removeUndefinedObjectItems = (originalObject) => {
+export const removeUndefinedObjectItems = <T,>(originalObject: T): T => {
   const newObject = JSON.parse(JSON.stringify(originalObject));
   Object.keys(newObject).forEach((key) => newObject[key] === undefined && delete newObject[key]);
   return newObject;
 };
 
-export const convertLimitOffset = (limit, offset) => [offset / limit + 1, limit];
+export const convertLimitOffset = (limit: number, offset: number): [number, number] => [
+  offset / limit + 1,
+  limit,
+];
 
 export const createSortBy = (
   header,
@@ -89,10 +95,10 @@ export const getNewSelectedItems = (selectedItems, currentItems) => {
 // for expandable rows only
 export const getRowIdByIndexExpandable = (arrayOfObjects, index) => arrayOfObjects[index / 2].id;
 
-export const getOffsetFromPageLimit = (page, limit) => page * limit - limit;
+export const getOffsetFromPageLimit = (page: number, limit: number): number => page * limit - limit;
 
-export function truncate(str, max, end) {
-  return str.length > max ? (
+export const truncate = (str: string, max: number, end: ReactNode): ReactNode =>
+  str.length > max ? (
     <>
       {str.substring(0, max - 1)}
       ...&nbsp;{end}
@@ -100,9 +106,8 @@ export function truncate(str, max, end) {
   ) : (
     str
   );
-}
 
-const findBullets = (description) => {
+const findBullets = (description: string): string => {
   let substringIndex = description.search(/:/);
   // + 2 accounts for the 2 new lines to separate the sentence from the start of the bullets
   return substringIndex > 0
@@ -111,7 +116,11 @@ const findBullets = (description) => {
     : description;
 };
 
-export const truncateDescription = (description, wordLength, setWordLength) =>
+export const truncateDescription = (
+  description: string,
+  wordLength: number,
+  setWordLength: Dispatch<SetStateAction<number>>,
+): ReactNode =>
   truncate(
     findBullets(description),
     wordLength,
@@ -120,35 +129,36 @@ export const truncateDescription = (description, wordLength, setWordLength) =>
     </a>,
   );
 
-export function createAdvisoriesIcons([rhea, rhba, rhsa, other], type = 'applicable') {
-  return (
-    <Flex flex={{ default: 'inlineFlex' }} style={{ flexWrap: 'nowrap' }}>
-      {[rhea, rhba, rhsa].every((item) => item === 0) && `No ${type} advisories`}
-      {rhsa !== 0 && (
-        <FlexItem spacer={{ default: 'spacerXs' }}>
-          <AdvisoriesIcon tooltipText='Security advisories' count={rhsa} Icon={SecurityIcon} />
-        </FlexItem>
-      )}
-      {rhba !== 0 && (
-        <FlexItem spacer={{ default: 'spacerXs' }}>
-          <AdvisoriesIcon tooltipText='Bug fixes' count={rhba} Icon={BugIcon} />
-        </FlexItem>
-      )}
-      {rhea !== 0 && (
-        <FlexItem spacer={{ default: 'spacerXs' }}>
-          <AdvisoriesIcon tooltipText='Enhancements' count={rhea} Icon={EnhancementIcon} />
-        </FlexItem>
-      )}
-      {other !== 0 && (
-        <FlexItem spacer={{ default: 'spacerXs' }}>
-          <AdvisoriesIcon tooltipText='Other' count={other} Icon={FlagIcon} />
-        </FlexItem>
-      )}
-    </Flex>
-  );
-}
+export const createAdvisoriesIcons = (
+  [rhea, rhba, rhsa, other]: number[],
+  status: AdvisoryStatus = 'Applicable',
+): JSX.Element => (
+  <Flex style={{ flexWrap: 'nowrap' }}>
+    {[rhea, rhba, rhsa].every((item) => item === 0) && `No ${status.toLowerCase()} advisories`}
+    {rhsa !== 0 && (
+      <FlexItem spacer={{ default: 'spacerXs' }}>
+        <AdvisoriesIcon tooltipText='Security advisories' count={rhsa} Icon={SecurityIcon} />
+      </FlexItem>
+    )}
+    {rhba !== 0 && (
+      <FlexItem spacer={{ default: 'spacerXs' }}>
+        <AdvisoriesIcon tooltipText='Bug fixes' count={rhba} Icon={BugIcon} />
+      </FlexItem>
+    )}
+    {rhea !== 0 && (
+      <FlexItem spacer={{ default: 'spacerXs' }}>
+        <AdvisoriesIcon tooltipText='Enhancements' count={rhea} Icon={EnhancementIcon} />
+      </FlexItem>
+    )}
+    {other !== 0 && (
+      <FlexItem spacer={{ default: 'spacerXs' }}>
+        <AdvisoriesIcon tooltipText='Other' count={other} Icon={FlagIcon} />
+      </FlexItem>
+    )}
+  </Flex>
+);
 
-export function createUpgradableColumn(updatableStatus) {
+export const createUpgradableColumn = (updatableStatus: UpdateStatus): string => {
   switch (updatableStatus) {
     case 'None':
       return intl.formatMessage(messages.labelsColumnsUpToApplicable);
@@ -157,14 +167,14 @@ export function createUpgradableColumn(updatableStatus) {
     case 'Installable':
       return intl.formatMessage(messages.labelsColumnsUpgradable);
   }
-}
+};
 
 /**
  * Inserts zero-width breakable spaces to correctly break EVRA.
  */
-export const wrappableEVRA = (evra = '') => {
+export const wrappableEVRA = (evra: string = ''): JSX.Element => {
   const [ev, ra] = evra.split('-');
-  let [e, v] = ev.split(':');
+  let [e, v]: (string | undefined)[] = ev.split(':');
   if (v === undefined) {
     v = e;
     e = undefined;
@@ -182,7 +192,7 @@ export const wrappableEVRA = (evra = '') => {
   );
 };
 
-export const getSeverityByCveImpact = (impact) => {
+export const getSeverityByCveImpact = (impact: string | null | undefined): Severity => {
   switch (impact) {
     case 'None':
       return SEVERITY_NONE;
@@ -199,10 +209,11 @@ export const getSeverityByCveImpact = (impact) => {
   }
 };
 
-export const createPackagesColumn = (packageCount, systemID) => (
+export const createPackagesColumn = (packageCount: number, systemID: string): JSX.Element => (
   <InsightsLink
     to={{
       pathname: `/systems/${systemID}`,
+      // @ts-expect-error InsightsLink type definition is incomplete
       state: { tab: 'packages' },
     }}
   >
@@ -210,16 +221,21 @@ export const createPackagesColumn = (packageCount, systemID) => (
   </InsightsLink>
 );
 
-export function handlePatchLink(type, name, body, windowLike) {
-  const loc = windowLike?.location ?? (typeof location !== 'undefined' ? location : { href: '' });
-  if (loc.href.indexOf('inventory') === -1) {
-    return <InsightsLink to={`/${type}/${name}`}>{body === undefined ? name : body}</InsightsLink>;
-  } else {
-    return <a href={`${document.baseURI}insights/patch/${type}/${name}`}>{body || name}</a>;
-  }
+interface WindowLike {
+  location?: Pick<Location, 'href'>;
 }
 
-export const arrayFromObj = (items) => Object.values(items).filter((value) => value);
+export const handlePatchLink = (type: 'advisories' | 'packages', name: string, body?: ReactNode, windowLike?: WindowLike): JSX.Element => {
+  const loc = windowLike?.location ?? (typeof location !== 'undefined' ? location : { href: '' });
+  if (loc.href.indexOf('inventory') === -1) {
+    // @ts-expect-error InsightsLink type definition is incomplete
+    return <InsightsLink to={`/${type}/${name}`}>{body === undefined ? name : body}</InsightsLink>;
+  }
+  return <a href={`${document.baseURI}insights/patch/${type}/${name}`}>{body || name}</a>;
+}
+
+export const arrayFromObj = <T,>(items: { [s: string]: T } | ArrayLike<T>): T[] =>
+  Object.values(items).filter((value) => value);
 
 export const remediationProvider = (issues, systems, remediationIdentifier) => {
   issues = [].concat(issues);
@@ -251,7 +267,8 @@ export const getFilterValue = (category, key) => {
 };
 
 // Array#toString / String(array) turns null into '', so keep the API literal "null"
-const getFilterStringFromApi = (value) => (value === null ? 'null' : String(value));
+const getFilterStringFromApi = (value: any): string =>
+  value === null ? 'null' : String(value);
 
 export const encodeParams = (parameters, shouldTranslateKeys) => {
   const calculateWorkloads = (systemProfile) => {
@@ -364,7 +381,7 @@ export const decodeQueryparams = (queryString, parsers = {}) => {
   return res;
 };
 
-const compareNormalizedValues = (left, right) =>
+const compareNormalizedValues = (left: any, right: any): number =>
   getFilterStringFromApi(left).localeCompare(getFilterStringFromApi(right));
 
 const normalizeFilterComparisonValue = (category, value) => {
@@ -599,17 +616,22 @@ export const changeListParams = (oldParams, newParams) => {
   return newState;
 };
 
-export function subtractDate(days) {
+export function subtractDate(days: number): string {
   const date = new Date();
   date.setDate(date.getDate() - days);
   return date.toISOString();
 }
 
-export function preserveNewlines(input) {
+export function preserveNewlines(input: string): string {
   return input && input.replace(new RegExp('\\n\\n(?=.*[\\n\\n])', 'g'), '\n');
 }
 
-export function sortCves(cves, index, direction) {
+export interface CvesWithSortBy {
+  sortBy: ISortBy
+  sortedCves: CvesRows
+}
+
+export function sortCves(cves: CvesRows, index: number, direction: SortByDirection): CvesWithSortBy {
   const sortedCves = cves.sort(({ cells: aCells }, { cells: bCells }) => {
     const aCell = aCells[index].value || aCells[index].title;
     const bCell = bCells[index].value || bCells[index].title;
@@ -704,14 +726,11 @@ export const persistantParams = (patchParams, decodedParams) => {
   };
 };
 
-export const handleLongSynopsis = (synopsis) => (
+export const handleLongSynopsis = (synopsis: string): JSX.Element => (
   <LinesEllipsis text={synopsis} maxLine='1' ellipsis='(...)' trimRight basedOn='letters' />
 );
 
-export const isRHAdvisory = (name) => /^(RHEA|RHBA|RHSA)/.test(name);
-
-export const buildTagString = (tag) =>
-  `${tag.category}/${tag.values?.tagKey}=${tag.value?.tagValue}`;
+export const isRHAdvisory = (name: string): boolean => /^(RHEA|RHBA|RHSA)/.test(name);
 
 /**
  * Build one `tags=…` query fragment with a single URI encode pass. Inventory / insights-chrome

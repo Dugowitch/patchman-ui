@@ -68,7 +68,7 @@ export const SYSTEMS_LIST_COLUMNS = [
     key: 'applicable_advisories',
     title: 'Installable advisories',
     transforms: [wrappable],
-    renderFunc: (value) => createAdvisoriesIcons(value, 'installable'),
+    renderFunc: (value) => createAdvisoriesIcons(value, 'Installable'),
   },
   {
     key: 'packages_installed',
