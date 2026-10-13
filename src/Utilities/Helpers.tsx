@@ -38,23 +38,6 @@ export const removeUndefinedObjectItems = (originalObject) => {
 
 export const convertLimitOffset = (limit, offset) => [offset / limit + 1, limit];
 
-export const transformPairs = (input, remediationIdentifier) => {
-  let issues = [];
-
-  const advisoriesNames = Object.keys(input?.data || {});
-  for (let i = 0; i < advisoriesNames.length; i++) {
-    if (input.data[advisoriesNames[i]][0] !== '') {
-      issues.push({
-        id: `${remediationIdentifier}:${advisoriesNames[i]}`,
-        description: advisoriesNames[i],
-        systems: input.data[advisoriesNames[i]],
-      });
-    }
-  }
-
-  return { issues };
-};
-
 export const createSortBy = (
   header,
   values,
@@ -794,6 +777,3 @@ export const mapGlobalFilters = (tags, workloads = {}) => {
 
 export const isObject = (variable) =>
   typeof variable === 'object' && variable !== null ? true : false;
-
-export const findFilterData = (optionName, options) =>
-  options.find((item) => item.label === optionName);

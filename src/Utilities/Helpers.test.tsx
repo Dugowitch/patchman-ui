@@ -26,7 +26,6 @@ import {
   mapGlobalFilters,
   persistantParams,
   remediationProvider,
-  transformPairs,
   wrappableEVRA,
 } from './Helpers';
 import { render } from '@testing-library/react';
@@ -445,39 +444,6 @@ describe('Helpers tests', () => {
       expect(getNewSelectedItems(selectedItems, currentItems)).toEqual(result);
     },
   );
-
-  it('Should return "false" when there is no issues available', () => {
-    const resultWhenParams = transformPairs({ data: {} });
-    expect(resultWhenParams).toEqual({ issues: [] });
-
-    const resultWhenNoParams = transformPairs();
-    expect(resultWhenNoParams).toEqual({ issues: [] });
-  });
-  it('Should return transformed issues', () => {
-    const resultWhenParams = transformPairs(
-      {
-        data: {
-          testAdvisory1: ['test-system-1'],
-          testAdvisory2: ['test-system-2'],
-        },
-      },
-      'test-identifier',
-    );
-    expect(resultWhenParams).toEqual({
-      issues: [
-        {
-          description: 'testAdvisory1',
-          id: 'test-identifier:testAdvisory1',
-          systems: ['test-system-1'],
-        },
-        {
-          description: 'testAdvisory2',
-          id: 'test-identifier:testAdvisory2',
-          systems: ['test-system-2'],
-        },
-      ],
-    });
-  });
 });
 
 describe('Test global filters', () => {
