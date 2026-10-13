@@ -36,6 +36,8 @@ import {
   BaseQueryParams,
   SystemPaginationQueryParams,
   DefaultPaginationQueryParams,
+  AdditionalQueryParams,
+  FilterCategory,
 } from './constants';
 import { intl } from './IntlProvider';
 import { generateFilter } from '@redhat-cloud-services/frontend-components-utilities/helpers';
@@ -288,16 +290,26 @@ export const remediationProviderWithPairs = (
 ): RemediationsIssues | false =>
   issuePairs ? transformFunc(issuePairs, remediationIdentifier) : false;
 
-export const getFilterValue = (category, key) => {
-  const filterCategory = filterCategories[category];
-  if (filterCategory) {
-    const filterOption =
-      /* some filters don't have constant values */
-      (filterCategory?.values || []).find((item) => item.value === key);
-    return filterOption || { apiValue: key };
-  } else {
-    return { apiValue: key };
+export const getFilterValue = (
+  category: string,
+  val: FilterValue,
+  shouldTranslateKeys?: boolean
+): FilterValue => {
+  if (!shouldTranslateKeys) {
+    return val
   }
+
+  const filterCategory: FilterCategory | undefined = filterCategories[category];
+  if (!filterCategory || !filterCategory.values) {
+    return val;
+  }
+
+  const filterOption = filterCategory.values.find((item) => item.value === val);
+  if (filterOption !== undefined && filterOption.apiValue !== undefined) {
+    return filterOption.apiValue
+  }
+
+  return val;
 };
 
 // Array#toString / String(array) turns null into '', so keep the API literal "null"
@@ -312,15 +324,23 @@ const calculateWorkloads = (systemProfile: InventoryWorkloads): string => {
   return result;
 };
 
-export const encodeParams = (parameters, shouldTranslateKeys) => {
-  const flattenFilters = (filter) => {
+export interface URLParams extends BaseQueryParams, AdditionalQueryParams, DefaultPaginationQueryParams {
+  id?: string;
+  group_name?: string;
+  package_name?: string
+}
+
+export const encodeParams = (parameters: URLParams, shouldTranslateKeys: boolean): string => {
+  const flattenFilters = (
+    filter: FilterEntries | undefined,
+    shouldTranslateKeys: boolean,
+  ): Record<string, string> => {
     let result = {};
     filter &&
-      Object.entries(filter).forEach((item) => {
-        let [key, value] = item;
-        value = (shouldTranslateKeys && getFilterValue(key, value).apiValue) || value;
+      Object.entries(filter).forEach(([key, value]) => {
+        value = getFilterValue(key, value, shouldTranslateKeys);
         const operator =
-          [].concat(value).length > 1 || multiValueFilters.includes(key) ? 'in:' : '';
+          ([] as FilterValue2).concat(value).length > 1 || multiValueFilters.includes(key) ? 'in:' : '';
         const serializedValue = Array.isArray(value)
           ? value.map(getFilterStringFromApi).join(',')
           : getFilterStringFromApi(value);
@@ -336,17 +356,21 @@ export const encodeParams = (parameters, shouldTranslateKeys) => {
 
   allParams = {
     ...allParams,
-    ...flattenFilters({ ...filter, ...(group_name ? { group_name } : {}) }),
+    ...flattenFilters({ ...filter, ...(group_name ? { group_name } : {}) }, shouldTranslateKeys),
   };
-  let params = [];
+  let params: string[] = [];
   Object.keys(allParams).forEach((key) => {
     const argKey = encodeURIComponent(key);
     const argValue = encodeURIComponent(allParams[key]);
 
-    if (!['', undefined, null].some((value) => [argValue, key].includes(value))) {
+    if (
+      !['', undefined, null].some((value) =>
+        ([argValue, key] as Array<string | null | undefined>).includes(value),
+      )
+    ) {
       if (!['selectedTags', 'systemProfile'].includes(key)) {
         params.push(argKey.concat('=').concat(argValue));
-      } else if (key === 'selectedTags') {
+      } else if (key === 'selectedTags' && allParams[key]) {
         params.push.apply(params, allParams[key]);
       }
     }
@@ -358,9 +382,9 @@ export const encodeParams = (parameters, shouldTranslateKeys) => {
   return '?'.concat(params.join('&')).concat(workloadsFilter);
 };
 
-export const encodeApiParams = (parameters) => encodeParams(parameters, true);
+export const encodeApiParams = (parameters: URLParams): string => encodeParams(parameters, true);
 
-export const encodeURLParams = (parameters) => {
+export const encodeURLParams = (parameters: URLParams): string => {
   delete parameters.id;
   let urlParams = { ...parameters };
   delete urlParams.selectedTags;

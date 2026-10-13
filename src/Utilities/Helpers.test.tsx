@@ -250,10 +250,10 @@ describe('Helpers tests', () => {
 
   it.each`
     category         | key               | result
-    ${'public_date'} | ${'last7'}        | ${publicDateOptions[0]}
-    ${'public_date'} | ${'random value'} | ${{ apiValue: 'random value' }}
-    ${undefined}     | ${'last7'}        | ${{ apiValue: 'last7' }}
-  `('getFilterValue: Should create object for $category', ({ category, key, result }) => {
+    ${'public_date'} | ${'last7'}        | ${publicDateOptions[0].value}
+    ${'public_date'} | ${'random value'} | ${'random value'}
+    ${undefined}     | ${'last7'}        | ${'last7'}
+  `('getFilterValue: Should return value, fallback apiValue for $category', ({ category, key, result }) => {
     expect(getFilterValue(category, key)).toEqual(result);
   });
 
