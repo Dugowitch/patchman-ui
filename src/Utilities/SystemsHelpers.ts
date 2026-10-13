@@ -69,19 +69,23 @@ export const createSystemsSortBy = (orderBy, orderDirection, hasLastUpload) => {
   return sort;
 };
 
-export const osParamParser = (paramValue) =>
+export type OSFilter__InventoryTable = Record<string, Record<string, boolean>>
+
+export const osFilterReduction = (osFilter: OSFilter__InventoryTable, os: string): OSFilter__InventoryTable => {
+  const [osName, osVersion] = os.split(' ');
+  const [major] = osVersion.split('.');
+
+  return {
+    ...osFilter,
+    [`${osName}-${major}`]: {
+      ...(osFilter[`${osName}-${major}`] || {}),
+      [`${osName}-${major}-${osVersion}`]: true,
+    },
+  };
+}
+
+export const osParamParser = (paramValue: string): OSFilter__InventoryTable =>
   paramValue
     .replace('in:', '')
     .split(',')
-    .reduce((osFilter, os) => {
-      const [osName, osVersion] = os.split(' ');
-      const [major] = osVersion.split('.');
-
-      return {
-        ...osFilter,
-        [`${osName}-${major}`]: {
-          ...(osFilter[`${osName}-${major}`] || {}),
-          [`${osName}-${major}-${osVersion}`]: true,
-        },
-      };
-    }, {});
+    .reduce(osFilterReduction, {});

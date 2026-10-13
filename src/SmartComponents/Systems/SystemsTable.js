@@ -31,6 +31,7 @@ import AsyncRemediationButton from '../Remediation/AsyncRemediationButton';
 import {
   buildFilterConfig,
   mergeInventoryColumns,
+  osFilterReduction,
   workloadToSystemInventory,
 } from '../../Utilities/SystemsHelpers';
 import { combineReducers } from 'redux';
@@ -85,18 +86,7 @@ const SystemsTable = ({
   };
   const osFilter = operatingSystemFilter && [
     {
-      osFilter: operatingSystemFilter.reduce((osFilter, os) => {
-        const [osName, osVersion] = os.split(' ');
-        const [major] = osVersion.split('.');
-
-        return {
-          ...osFilter,
-          [`${osName}-${major}`]: {
-            ...(osFilter[`${osName}-${major}`] || {}),
-            [`${osName}-${major}-${osVersion}`]: true,
-          },
-        };
-      }, {}),
+      osFilter: operatingSystemFilter.reduce(osFilterReduction, {}),
     },
   ];
   const [inventorySnapshot, setInventorySnapshot] = useState(() =>
