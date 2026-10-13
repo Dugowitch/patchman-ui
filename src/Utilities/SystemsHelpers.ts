@@ -1,7 +1,9 @@
+import { IFormatter, ITransform, SortByDirection } from '@patternfly/react-table';
 import staleFilter from '../PresentationalComponents/Filters/SystemStaleFilter';
 import systemsUpdatableFilter from '../PresentationalComponents/Filters/SystemsUpdatableFilter';
 import systemsWorkloadFilter from '../PresentationalComponents/Filters/WorkloadFilter';
 import { defaultCompoundSortValues } from './constants';
+import { ReactNode } from 'react';
 
 export interface InventoryWorkloads {
   sap_system?: boolean;
@@ -38,7 +40,21 @@ export const buildFilterConfig = (filter, apply) => ({
   ],
 });
 
-export const mergeInventoryColumns = (patchmanColumns, inventoryColumns) =>
+export interface ColumnDefinition {
+  key: string;
+  title?: string;
+  cellFormatters?: IFormatter[];
+  transforms?: ITransform[];
+  renderFunc?: (...args: unknown[]) => ReactNode;
+  props?: unknown;
+  inventoryKey?: string;
+  sortKey?: string;
+}
+
+export const mergeInventoryColumns = (
+  patchmanColumns: ColumnDefinition[],
+  inventoryColumns: ColumnDefinition[],
+): ColumnDefinition[] =>
   patchmanColumns.map((column) => ({
     ...inventoryColumns.find(
       (inventoryColumn) => inventoryColumn.key === (column.inventoryKey ?? column.key),
@@ -46,7 +62,11 @@ export const mergeInventoryColumns = (patchmanColumns, inventoryColumns) =>
     ...column,
   }));
 
-export const createSystemsSortBy = (orderBy, orderDirection, hasLastUpload) => {
+export const createSystemsSortBy = (
+  orderBy: string,
+  orderDirection: SortByDirection,
+  hasLastUpload?: boolean,
+): string => {
   if (orderBy === 'updated') {
     if (!hasLastUpload) {
       orderBy = 'last_upload';
@@ -57,12 +77,12 @@ export const createSystemsSortBy = (orderBy, orderDirection, hasLastUpload) => {
     orderBy = 'groups'; // patch API service uses 'groups' instead of 'group_name' sort parameter
   }
 
-  let sort = `${orderDirection === 'ASC' ? '' : '-'}${orderBy}`;
+  let sort = `${orderDirection === SortByDirection.asc ? '' : '-'}${orderBy}`;
 
   // if orderBy is for a compound column reset sort value to relative compound sort value
   Object.keys(defaultCompoundSortValues).forEach((col) => {
     if (col === orderBy) {
-      sort = defaultCompoundSortValues[col][orderDirection.toLowerCase()];
+      sort = defaultCompoundSortValues[col]![orderDirection];
     }
   });
 

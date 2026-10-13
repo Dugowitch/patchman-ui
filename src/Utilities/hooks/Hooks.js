@@ -233,7 +233,7 @@ export const useGetEntities = (
     const { selectedTags } = mapGlobalFilters(filters.tagFilters);
     const search = filters?.hostnameOrId ?? '';
 
-    const sort = createSystemsSortBy(orderBy, orderDirection, packageName);
+    const sort = createSystemsSortBy(orderBy, orderDirection.toLowerCase(), packageName);
     const filter = buildApiFilters(patchParams.filter, filters);
     const nextSelectedTags = [...activeTags, ...selectedTags];
 

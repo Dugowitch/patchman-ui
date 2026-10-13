@@ -26,12 +26,13 @@ import {
   SEVERITY_MODERATE,
   AdvisoryStatus,
   Severity,
+  CompoundSortOptions,
   UpdateStatus,
 } from './constants';
 import { intl } from './IntlProvider';
 import { generateFilter } from '@redhat-cloud-services/frontend-components-utilities/helpers';
 import { InsightsLink } from '@redhat-cloud-services/frontend-components/InsightsLink';
-import { InventoryWorkloads, OSFilter__InventoryTable } from './SystemsHelpers';
+import { ColumnDefinition, OSFilter__InventoryTable, InventoryWorkloads } from './SystemsHelpers';
 import { CvesRows } from './DataMappers';
 import { PackageSystemItem, PackageSystemsResponse } from './api/patchApiTypes';
 
@@ -47,34 +48,34 @@ export const convertLimitOffset = (limit: number, offset: number): [number, numb
 ];
 
 export const createSortBy = (
-  header,
-  values,
-  offset,
-  compoundSortValues = defaultCompoundSortValues,
-) => {
-  if (values) {
-    let [column] = values;
-    let multiple = values.join();
-    let direction = column[0] === '-' ? SortByDirection.desc : SortByDirection.asc;
-    Object.keys(compoundSortValues).forEach((col) => {
-      Object.keys(compoundSortValues[col]).forEach((dir) => {
-        if (compoundSortValues[col][dir] === multiple) {
-          column = col;
-          direction = dir;
-        }
-      });
-    });
-
-    column = column.replace(/^(-|\+)/, '');
-    const index = findIndex(header, (item) => item.key === column);
-    let sort = {
-      index: index + offset,
-      direction,
-    };
-    return sort;
+  header: ColumnDefinition[] | undefined,
+  values: string[] | undefined,
+  offset: number,
+  compoundSortValues: CompoundSortOptions = defaultCompoundSortValues,
+): ISortBy => {
+  if (!values) {
+    return {};
   }
 
-  return {};
+  let [column] = values;
+  let multiple = values.join();
+  let direction = column[0] === '-' ? SortByDirection.desc : SortByDirection.asc;
+  Object.keys(compoundSortValues).forEach((col) => {
+    Object.keys(compoundSortValues[col]).forEach((dir) => {
+      if (compoundSortValues[col][dir] === multiple) {
+        column = col;
+        direction = dir as SortByDirection;
+      }
+    });
+  });
+
+  column = column.replace(/^(-|\+)/, '');
+  const index = findIndex(header, (item) => item.key === column);
+  let sort = {
+    index: index + offset,
+    direction,
+  };
+  return sort;
 };
 
 export const addOrRemoveItemFromSet = (targetObj, inputArr) => {
@@ -723,7 +724,7 @@ export const persistantParams = (patchParams, decodedParams) => {
     ...(persistantParams.sort && {
       sortBy: {
         key: persistantParams.sort.replace(/^-/, ''),
-        direction: persistantParams.sort.match(/^-/) ? 'desc' : 'asc',
+        direction: persistantParams.sort.match(/^-/) ? SortByDirection.desc : SortByDirection.asc,
       },
     }),
   };

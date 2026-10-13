@@ -1,4 +1,5 @@
 import { renderHook } from '@testing-library/react';
+import { SortByDirection } from '@patternfly/react-table';
 import {
   buildFilterConfig,
   createSystemsSortBy,
@@ -8,23 +9,23 @@ import {
 
 describe('createSystemsSortBy,', () => {
   it('should translate main parameters', () => {
-    expect(createSystemsSortBy('abc', 'ASC', undefined)).toEqual('abc');
-    expect(createSystemsSortBy('abc', 'DESC', undefined)).toEqual('-abc');
+    expect(createSystemsSortBy('abc', SortByDirection.asc, undefined)).toEqual('abc');
+    expect(createSystemsSortBy('abc', SortByDirection.desc, undefined)).toEqual('-abc');
   });
 
   it('should translate group name parameter', () => {
-    expect(createSystemsSortBy('group_name', 'ASC', undefined)).toEqual('groups');
-    expect(createSystemsSortBy('group_name', 'DESC', undefined)).toEqual('-groups');
+    expect(createSystemsSortBy('group_name', SortByDirection.asc, undefined)).toEqual('groups');
+    expect(createSystemsSortBy('group_name', SortByDirection.desc, undefined)).toEqual('-groups');
   });
 
   it('should translate updated parameter', () => {
-    expect(createSystemsSortBy('updated', 'ASC', false)).toEqual('last_upload');
-    expect(createSystemsSortBy('updated', 'DESC', false)).toEqual('-last_upload');
+    expect(createSystemsSortBy('updated', SortByDirection.asc, false)).toEqual('last_upload');
+    expect(createSystemsSortBy('updated', SortByDirection.desc, false)).toEqual('-last_upload');
   });
 
   it('should translate updated parameter while having last upload', () => {
-    expect(createSystemsSortBy('updated', 'ASC', true)).toEqual('os');
-    expect(createSystemsSortBy('updated', 'DESC', true)).toEqual('-os');
+    expect(createSystemsSortBy('updated', SortByDirection.asc, true)).toEqual('os');
+    expect(createSystemsSortBy('updated', SortByDirection.desc, true)).toEqual('-os');
   });
 });
 
