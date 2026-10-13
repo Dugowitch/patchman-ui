@@ -19,9 +19,10 @@ import IconWithLabel from '../Snippets/IconWithLabel';
 
 /**
  * Display advisory severity icon with label.
- * @param {string} props.gap - The gap between the icon and the lable (default: 'gapSm').
- * @param {string} props.size - The size of the icon (default: 'sm').
- * @param {number} props.severity - The numeric value of advisory severity (default: null).
+ * @param {object} props
+ * @param {string} [props.size='sm'] - The size of the icon (default: 'sm').
+ * @param {null|1|2|3|4} [props.severity] - The numeric value of advisory severity (default: null).
+ * @returns {JSX.Element}
  */
 const AdvisorySeverity = ({ size = 'sm', severity = SEVERITY_NONE }) => {
   const severityData = advisorySeverities[severity] ?? advisorySeverities[0];
@@ -55,7 +56,7 @@ const AdvisorySeverity = ({ size = 'sm', severity = SEVERITY_NONE }) => {
 
 AdvisorySeverity.propTypes = {
   size: PropTypes.string,
-  severity: PropTypes.number,
+  severity: PropTypes.oneOf([null, 1, 2, 3, 4]),
 };
 
 export default AdvisorySeverity;
