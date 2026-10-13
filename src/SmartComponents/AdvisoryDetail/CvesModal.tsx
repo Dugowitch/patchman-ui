@@ -7,23 +7,24 @@ import searchFilter from '../../PresentationalComponents/Filters/SearchFilter';
 import { cvesTableColumns } from '../../PresentationalComponents/TableView/TableViewAssets';
 import { fetchCves } from '../../store/Actions/VulnerabilityActions';
 import { pageDefaultFilters } from '../../Utilities/constants';
-import { createCvesRows } from '../../Utilities/DataMappers';
+import { createCvesRows, CvesRows} from '../../Utilities/DataMappers';
 import { sortCves } from '../../Utilities/Helpers';
 import { SortByDirection } from '@patternfly/react-table';
 import { CveItem } from '../../Utilities/api/vulnerabilityApi';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { ISortBy } from '@patternfly/react-table';
 
 interface CvesModalProps {
   cveIds: Array<string>;
 }
 
 const CvesModal = ({ cveIds }: CvesModalProps) => {
-  const [cves, setCves] = useState<Array<CveItem>>([]);
-  const [rows, setRows] = useState<Array<CveItem>>([]);
+  const [cves, setCves] = useState<CvesRows>([]);
+  const [rows, setRows] = useState<CvesRows>([]);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState({
+  const [sortBy, setSortBy] = useState<ISortBy>({
     direction: SortByDirection.asc,
     index: 0,
   });
@@ -43,18 +44,16 @@ const CvesModal = ({ cveIds }: CvesModalProps) => {
   }, [cves, page, perPage, sortBy]);
 
   useMemo(() => {
-    const sortedCves =
+    const filteredData =
       (search !== undefined &&
         search !== '' &&
         data.filter((cve: CveItem) => {
-          const {
-            attributes: { synopsis },
-          } = cve;
+          const { attributes: {synopsis} } = cve;
           return synopsis && search && synopsis.toLowerCase().includes(search.toLowerCase());
         })) ||
       data;
 
-    setCves(createCvesRows(((sortedCves.length !== 0 || search) && sortedCves) || data));
+    setCves(createCvesRows(((filteredData.length !== 0 || search) && filteredData) || data));
   }, [search, data]);
 
   const handleClose = () => {
@@ -104,7 +103,7 @@ const CvesModal = ({ cveIds }: CvesModalProps) => {
             metadata: {
               limit: perPage,
               offset: (page - 1) * perPage,
-              total_items: cves && cves.length,
+              total_items: cves?.length,
             },
             status,
             queryParams: { filter: {}, search },

@@ -10,7 +10,7 @@ import {
   EmptyPackagesList,
 } from '../PresentationalComponents/Snippets/EmptyStates';
 import { SystemUpToDate } from '../PresentationalComponents/Snippets/SystemUpToDate';
-import { entityTypes } from './constants';
+import { entityTypes, Severity } from './constants';
 import {
   createUpgradableColumn,
   getSeverityByCveImpact,
@@ -20,6 +20,7 @@ import {
 } from './Helpers';
 import { intl } from './IntlProvider';
 import AdvisorySeverity from '../PresentationalComponents/AdvisorySeverity/AdvisorySeverity';
+import { CveItem } from './api/vulnerabilityApi';
 
 export interface TCells<T = never> {
   cells: Array<{
@@ -328,32 +329,10 @@ export const createPackagesRows = (rows) => {
   }
 };
 
-export const createCvesRows = (rows) => {
-  if (rows.length !== 0) {
-    return rows.map((cve) => {
-      const { attributes, id } = cve;
-      const severity = getSeverityByCveImpact(attributes.impact);
+export type CvesRows = TRow<Severity>[] | TEmptyRow[];
 
-      return {
-        id,
-        key: id,
-        cells: [
-          {
-            title: (
-              <a href={`${document.baseURI}insights/vulnerability/cves/${attributes.synopsis}`}>
-                {attributes.synopsis}
-              </a>
-            ),
-          },
-          {
-            title: <AdvisorySeverity severity={severity} />,
-            value: severity,
-          },
-          { title: parseFloat(attributes.cvss_score).toFixed(1) },
-        ],
-      };
-    });
-  } else {
+export const createCvesRows = (rows: CveItem[]): CvesRows => {
+  if (rows.length === 0) {
     return [
       {
         heightAuto: true,
@@ -366,4 +345,28 @@ export const createCvesRows = (rows) => {
       },
     ];
   }
+  
+  return rows.map((cve) => {
+    const { attributes, id } = cve;
+    const severity = getSeverityByCveImpact(attributes.impact);
+
+    return {
+      id,
+      key: id,
+      cells: [
+        {
+          title: (
+            <a href={`${document.baseURI}insights/vulnerability/cves/${attributes.synopsis}`}>
+              {attributes.synopsis}
+            </a>
+          ),
+        },
+        {
+          title: <AdvisorySeverity severity={severity} />,
+          value: severity,
+        },
+        { title: parseFloat(attributes.cvss_score).toFixed(1) },
+      ],
+    };
+  });
 };
