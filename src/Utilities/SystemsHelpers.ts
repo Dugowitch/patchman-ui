@@ -2,8 +2,8 @@ import { IFormatter, ITransform, SortByDirection } from '@patternfly/react-table
 import staleFilter from '../PresentationalComponents/Filters/SystemStaleFilter';
 import systemsUpdatableFilter from '../PresentationalComponents/Filters/SystemsUpdatableFilter';
 import systemsWorkloadFilter from '../PresentationalComponents/Filters/WorkloadFilter';
-import { defaultCompoundSortValues } from './constants';
 import { ReactNode } from 'react';
+import { defaultCompoundSortValues, Filter, FilterEntries, ValueLabel } from './constants';
 
 export interface InventoryWorkloads {
   sap_system?: boolean;
@@ -32,7 +32,22 @@ export const workloadToSystemInventory = (
   ...(workloads.includes('satellite') && { satellite: true }),
 });
 
-export const buildFilterConfig = (filter, apply) => ({
+export interface FilterConfigItem {
+  label: string;
+  type: string;
+  filterValues: {
+    onChange: (event: unknown, value: string) => void;
+    items: ValueLabel[];
+    value: string;
+    placeholder: string;
+  };
+}
+
+export interface FilterConfig {
+  items: FilterConfigItem[];
+}
+
+export const buildFilterConfig = (filter: FilterEntries, apply: (f: Filter) => void): FilterConfig => ({
   items: [
     staleFilter(apply, filter),
     systemsUpdatableFilter(apply, filter),
