@@ -31,6 +31,7 @@ import {
   SelectedRows,
   FilterEntries,
   FilterValue,
+  FilterValue1,
   FilterValue2,
   Filter,
   BaseQueryParams,
@@ -523,47 +524,62 @@ export const getActiveFilterState = (
   };
 };
 
-export const buildFilterChips = (filters, search, searchChipLabel = 'Search', parsers = {}) => {
-  let filterConfig = [];
-  const buildChips = (filters, category) => {
-    if (parsers[category]) {
-      return parsers[category](filters[category]);
-    } else if (multiValueFilters.includes(category)) {
-      const filterValues =
-        (filters[category] &&
-          ((typeof filters[category] === 'string' && filters[category].split(',')) ||
-            filters[category])) ||
-        [];
-      // Leave the raw value intact (including `null`) so chips render and removal logic works
-      return filterValues.map((value) => ({
-        name: value,
-        id: category,
-        value,
-      }));
-    } else {
-      const { values } = filterCategories[category];
+export interface Chip {
+  name: string
+  id?: string
+  value: FilterValue1
+}
 
-      // Previously we dropped truthy-but-falsy values like `null`, which hid the severity chip
-      if (filters[category] === undefined || filters[category] === '') {
-        return [];
+export interface FilterConfig {
+  category: string;
+  id: string;
+  chips: Chip[];
+}
+
+const buildChips = (filters: FilterEntries, category: string): Chip[] => {
+  const rawValue = filters[category];
+  // Previously we dropped truthy-but-falsy values like `null`, which hid the severity chip
+  if (rawValue === undefined || rawValue === '') {
+    return [];
+  }
+
+  if (multiValueFilters.includes(category)) {
+    let filterValues: FilterValue2 = [];
+    if (rawValue) {
+      if (typeof rawValue === 'string') {
+        filterValues = rawValue.split(',');
+      } else {
+        filterValues = rawValue as FilterValue2;
       }
-
-      return [].concat(filters[category]).map((filterValue) => {
-        const match = values.find(
-          (item) => getFilterStringFromApi(item.value) === getFilterStringFromApi(filterValue),
-        );
-        return {
-          name: match.label,
-          value: filterValue,
-          id: match.value,
-        };
-      });
     }
-  };
+    
+    // Leave the raw value intact (including `null`) so chips render and removal logic works
+    return filterValues.map((value) => ({
+      name: value,
+      id: category,
+      value,
+    }));
+  }
 
-  const processFilters = () => {
+  const { values } = filterCategories[category];
+  return ([] as FilterValue2).concat(rawValue).map((filterValue) => {
+    const match = values.find(
+      (item) => getFilterStringFromApi(item.value) === getFilterStringFromApi(filterValue),
+    );
+    return {
+      name: match.label,
+      value: filterValue,
+      id: match.value,
+    };
+  });
+};
+
+export const buildFilterChips = (filters: FilterEntries, search: string, searchChipLabel: string = 'Search'): FilterConfig[] => {
+  let filterConfig: FilterConfig[] = [];
+
+  if (filters) {
     let categories = Object.keys(filters).filter(
-      (item) => filters[item] !== '' && [].concat(filters[item]).length !== 0,
+      (item) => filters[item] !== '' && ([] as FilterValue2).concat(filters[item]).length !== 0,
     );
     filterConfig = filterConfig.concat(
       categories.map((category) => ({
@@ -572,25 +588,15 @@ export const buildFilterChips = (filters, search, searchChipLabel = 'Search', pa
         chips: buildChips(filters, category),
       })),
     );
-  };
+  }
 
-  const processSearch = () => {
-    filterConfig = filterConfig.concat([
-      {
-        category: searchChipLabel,
-        id: 'search',
-        chips: [
-          {
-            name: search,
-            value: search,
-          },
-        ],
-      },
-    ]);
-  };
-
-  filters && processFilters();
-  search && processSearch();
+  if (search) {
+    filterConfig = filterConfig.concat([{
+      category: searchChipLabel,
+      id: 'search',
+      chips: [{ name: search, value: search }],
+    }]);
+  }
 
   return filterConfig;
 };
