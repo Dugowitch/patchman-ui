@@ -400,12 +400,18 @@ describe('Helpers tests', () => {
     ${{ param: 'Hey!' }} | ${{ param: 'Yo!' }} | ${{ param: 'Yo!' }}
     ${{ offset: 15 }}    | ${{ limit: 100 }}   | ${{ limit: 100, offset: 0 }}
     ${{ filter: { advisory_type: 2 } }} | ${{ filter: { public_date: 'last7' } }} | ${{
-  filter: {
-    advisory_type: 2,
-    public_date: 'last7',
-  },
-  offset: 0,
-}}
+      filter: {
+        advisory_type: 2,
+        public_date: 'last7',
+      },
+    }}
+    ${{ filter: { advisory_type: 2 }, offset: 2 }} | ${{ filter: { public_date: 'last7' } }} | ${{
+      filter: {
+        advisory_type: 2,
+        public_date: 'last7',
+      },
+      offset: 0,
+    }}
   `('changeListParams: Should return correct parameters', ({ oldParams, newParams, result }) => {
     expect(changeListParams(oldParams, newParams)).toEqual(result);
   });

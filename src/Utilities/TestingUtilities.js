@@ -50,7 +50,7 @@ export const testExport = (exportCveCallback, exportJsonCallback, exportType) =>
       await user.click(screen.getByText('Export to CSV'));
 
       await waitFor(() => {
-        expect(exportCveCallback).toHaveBeenCalledWith({ page: 1, page_size: 20 }, exportType);
+        expect(exportCveCallback).toHaveBeenCalledWith({}, exportType);
       });
     });
 
@@ -63,7 +63,7 @@ export const testExport = (exportCveCallback, exportJsonCallback, exportType) =>
       await user.click(screen.getByText('Export to JSON'));
 
       await waitFor(() => {
-        expect(exportJsonCallback).toHaveBeenCalledWith({ page: 1, page_size: 20 }, exportType);
+        expect(exportJsonCallback).toHaveBeenCalledWith({}, exportType);
       });
     });
   });

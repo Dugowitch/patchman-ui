@@ -324,7 +324,7 @@ export const packageDetailData = {
 
 export const systemsStoreState = {
   selectedRows: {},
-  queryParams: { page: 1, perPage: 20, search: 'testSearch', offset: 0 },
+  queryParams: { page: 1, perPage: 20, search: 'testSearch' },
   loaded: true,
   columns: [{ key: 'testCol' }],
   rows: [

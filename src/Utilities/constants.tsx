@@ -93,10 +93,7 @@ export const storeListDefaults: ListStore<any> = {
   },
   expandedRows: {},
   selectedRows: {},
-  queryParams: {
-    page: 1,
-    page_size: 20,
-  },
+  queryParams: {},
   error: {},
 };
 

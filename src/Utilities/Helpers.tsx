@@ -38,6 +38,7 @@ import {
   DefaultPaginationQueryParams,
   AdditionalQueryParams,
   FilterCategory,
+  QueryParams,
 } from './constants';
 import { intl } from './IntlProvider';
 import { generateFilter } from '@redhat-cloud-services/frontend-components-utilities/helpers';
@@ -658,26 +659,36 @@ export const buildApiFilters = (patchFilters: FilterEntries, inventoryFilters: I
   ...buildOsFilter(inventoryFilters?.osFilter),
 });
 
-export const changeListParams = (oldParams, newParams) => {
+export const changeListParams = (oldParams: QueryParams, newParams: Record<string, unknown>): QueryParams => {
   const newState = { ...oldParams, ...newParams };
-  const offsetResetParams = ['filter', 'search', 'limit', 'selectedTags'];
-  if (offsetResetParams.some((item) => newParams.hasOwnProperty(item))) {
-    newState.offset = 0;
+
+  if ('offset' in oldParams && 'offset' in newState) {
+    // `offset` is in `oldParams` iff `oldParams` do not come from *Systems store
+    // `newState` check just to make TS understands; if it was in `oldParams`, it will be in `newState`
+    // data from non-*Systems store fail this check iff `offset` was not present, therefore does not need resetting
+    
+    const offsetResetParams = ['filter', 'search', 'limit', 'selectedTags'];
+    if (offsetResetParams.some((item) => item in newParams)) {
+      newState.offset = 0;
+    }
   }
 
-  if (newParams.hasOwnProperty('filter')) {
-    newState.filter = { ...oldParams.filter, ...newParams.filter };
-
-    // we need explicitly remove 'undefined' filters for safety
-    Object.keys(newState.filter).forEach(
-      (key) =>
-        (newState.filter[key] === undefined || newState.filter[key] === '') &&
-        delete newState.filter[key],
-    );
+  if ('filter' in newParams && typeof newParams.filter === 'object' && !Array.isArray(newParams.filter)) {
+    const filter = { ...oldParams.filter, ...newParams.filter };
+    // This is not only filter update mechanic but also filter reset mechanic.
+    // If `filter: { key: undefined }` is passed into action.payload (propagates as `newParams` into this fucntion),
+    // it overwrites the old filter value with `undefined` and then the filter entry gets deleted right below.
+    // That is, at least one of the reasons, we need to delete filters with undefiend values.
+    for (const key in filter) {
+      if (filter[key] === undefined || filter[key] === '') {
+        delete filter[key]
+      }
+    }
+    newState.filter = filter
   }
 
-  if (newState.hasOwnProperty('tags')) {
-    newState && delete newState.tags;
+  if ('tags' in newState) {
+    delete newState.tags;
   }
 
   return newState;
@@ -741,12 +752,18 @@ export const createOSColumn = ({ osName, rhsm }: SystemOS): ReactNode => {
 export const removeUndefinedObjectKeys = (selectedRows: SelectedRows): string[] =>
   Object.keys(selectedRows).filter((row) => selectedRows[row]);
 
-export const prepareEntitiesParams = (parameters) => {
-  const offset =
-    parameters.offset || getOffsetFromPageLimit(parameters.page || 1, parameters.perPage || 20);
-  const limit = parameters.limit || parameters.perPage || 20;
+interface SystemInterimQueryParams extends BaseQueryParams, AdditionalQueryParams, SystemPaginationQueryParams, Partial<DefaultPaginationQueryParams> {
+  id?: string
+  package_name?: string
+}
 
-  const apiParams = { ...parameters, offset, limit };
+export const prepareEntitiesParams = (parameters: SystemInterimQueryParams): URLParams & Required<DefaultPaginationQueryParams> => {
+  const { page, perPage, ...rest } = parameters
+  const offset =
+    parameters.offset || getOffsetFromPageLimit(page || 1, perPage || 20);
+  const limit = parameters.limit || perPage || 20;
+
+  const apiParams = { ...rest, offset, limit };
 
   // we need explicitly remove 'undefined' parameters for safety
   return removeUndefinedObjectItems(apiParams);

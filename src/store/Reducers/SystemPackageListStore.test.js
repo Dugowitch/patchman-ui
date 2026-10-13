@@ -30,8 +30,8 @@ describe('SystemPackageListStore tests', () => {
     ${storeListDefaults} | ${{ type: CLEAR_SYSTEM_PACKAGES, payload: {} }}                             | ${{ ...storeListDefaults, status: { isLoading: true }, error: {}, queryParams: { filter: { update_status: ['Installable'] } } }}
     ${storeListDefaults} | ${{ type: action_rejected, payload: error }}                                | ${{ ...storeListDefaults, status: { isLoading: false, hasError: true, code: undefined }, error, metadata: {} }}
     ${storeListDefaults} | ${{ type: action_rejected, payload: error }}                                | ${{ ...storeListDefaults, status: { isLoading: false, hasError: true, code: undefined }, error, metadata: {} }}
-    ${storeListDefaults} | ${{ type: CHANGE_SYSTEM_PACKAGES_LIST_PARAMS, payload: { limit: 10 } }}     | ${{ ...storeListDefaults, queryParams: { limit: 10, offset: 0, page: 1, page_size: 20 } }}
-    ${storeListDefaults} | ${{ type: TRIGGER_GLOBAL_FILTER, payload: { limit: 10 } }}                  | ${{ ...storeListDefaults, queryParams: { limit: 10, offset: 0, page: 1, page_size: 20 } }}
+    ${storeListDefaults} | ${{ type: CHANGE_SYSTEM_PACKAGES_LIST_PARAMS, payload: { limit: 10 } }}     | ${{ ...storeListDefaults, queryParams: { limit: 10 } }}
+    ${storeListDefaults} | ${{ type: TRIGGER_GLOBAL_FILTER, payload: { limit: 10 } }}                  | ${{ ...storeListDefaults, queryParams: { limit: 10 } }}
     ${storeListDefaults} | ${{ type: SELECT_SYSTEM_PACKAGES_ROW, payload: { id: 1, selected: true } }} | ${{ ...storeListDefaults, selectedRows: { 1: true } }}
     ${storeListDefaults} | ${{ type: 'NONSENSE', payload: {} }}                                        | ${storeListDefaults}
     ${undefined}         | ${{ type: 'NONSENSE', payload: {} }}                                        | ${{ ...storeListDefaults, queryParams: { filter: { update_status: ['Installable'] } } }}

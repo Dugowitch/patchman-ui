@@ -38,7 +38,7 @@ describe('AdvisoryListStore tests', () => {
     ${advisoryListStoreDefaults} | ${{ type: action_fulfilled, payload: fulfilled_payload }}               | ${{ ...advisoryListStoreDefaults, metadata: fulfilled_payload.meta, rows: fulfilled_payload.data, status: { code: undefined, isLoading: false, hasError: false }, error: {} }}
     ${advisoryListStoreDefaults} | ${{ type: action_pending, payload: {} }}                                | ${{ ...advisoryListStoreDefaults, status: { code: undefined, isLoading: true, hasError: false }, error: {} }}
     ${advisoryListStoreDefaults} | ${{ type: EXPAND_ADVISORY_ROWS, payload: [{ rowId: 1, value: true }] }} | ${{ ...advisoryListStoreDefaults, expandedRows: { 1: true } }}
-    ${advisoryListStoreDefaults} | ${{ type: CHANGE_ADVISORY_LIST_PARAMS, payload: { limit: 10 } }}        | ${{ ...advisoryListStoreDefaults, queryParams: { limit: 10, offset: 0 } }}
+    ${advisoryListStoreDefaults} | ${{ type: CHANGE_ADVISORY_LIST_PARAMS, payload: { limit: 10 } }}        | ${{ ...advisoryListStoreDefaults, queryParams: { limit: 10 } }}
     ${advisoryListStoreDefaults} | ${{ type: SELECT_ADVISORY_ROW, payload: { id: 1, selected: true } }}    | ${{ ...advisoryListStoreDefaults, selectedRows: { 1: true } }}
     ${advisoryListStoreDefaults} | ${{ type: 'NONSENSE', payload: {} }}                                    | ${advisoryListStoreDefaults}
     ${undefined}                 | ${{ type: 'NONSENSE', payload: {} }}                                    | ${advisoryListStoreDefaults}
