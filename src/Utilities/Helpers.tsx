@@ -90,8 +90,6 @@ export const getRowIdByIndexExpandable = (arrayOfObjects, index) => arrayOfObjec
 
 export const getOffsetFromPageLimit = (page, limit) => page * limit - limit;
 
-export const getLimitFromPageSize = (limit) => limit;
-
 export function truncate(str, max, end) {
   return str.length > max ? (
     <>
@@ -656,7 +654,7 @@ export const removeUndefinedObjectKeys = (selectedRows) =>
 export const prepareEntitiesParams = (parameters) => {
   const offset =
     parameters.offset || getOffsetFromPageLimit(parameters.page || 1, parameters.perPage || 20);
-  const limit = parameters.limit || getLimitFromPageSize(parameters.perPage || 20);
+  const limit = parameters.limit || parameters.perPage || 20;
 
   const apiParams = { ...parameters, offset, limit };
 

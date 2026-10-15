@@ -9,7 +9,6 @@ import messages from '../../Messages';
 import { defaultCompoundSortValues, exportNotifications, multiValueFilters } from '../constants';
 import {
   convertLimitOffset,
-  getLimitFromPageSize,
   buildApiFilters,
   getOffsetFromPageLimit,
   encodeURLParams,
@@ -29,7 +28,7 @@ export const useSetPage = (limit, callback) => {
 export const useHandleRefresh = (metadata, callback) => {
   const handleRefresh = useCallback(({ page, per_page: perPage }) => {
     const offset = getOffsetFromPageLimit(page, perPage);
-    const limit = getLimitFromPageSize(perPage);
+    const limit = perPage;
     (metadata.offset !== offset || metadata.limit !== limit) &&
       callback({
         ...(metadata.offset !== offset && { offset }),
@@ -45,9 +44,7 @@ export const usePagePerPage = (limit, offset) => {
 };
 
 export const usePerPageSelect = (callback) => {
-  const onPerPageSelect = useCallback((_, perPage) =>
-    callback({ limit: getLimitFromPageSize(perPage), offset: 0 }),
-  );
+  const onPerPageSelect = useCallback((_, perPage) => callback({ limit: perPage, offset: 0 }));
   return onPerPageSelect;
 };
 

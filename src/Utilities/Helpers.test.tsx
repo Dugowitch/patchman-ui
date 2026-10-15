@@ -17,7 +17,6 @@ import {
   encodeURLParams,
   hasActiveInventoryFilters,
   getFilterValue,
-  getLimitFromPageSize,
   getNewSelectedItems,
   getOffsetFromPageLimit,
   getRowIdByIndexExpandable,
@@ -205,12 +204,6 @@ describe('Helpers tests', () => {
     } = result;
     expect(to).toEqual(expected);
     expect(children).toEqual('custom text');
-  });
-
-  it('getLimitFromPageSize: Should get correct Limit', () => {
-    let limit = Math.random();
-    let result = getLimitFromPageSize(limit);
-    expect(result).toEqual(limit);
   });
 
   it('getOffsetFromPageLimit: Should get correct offset', () => {
