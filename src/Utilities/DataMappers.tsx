@@ -21,7 +21,7 @@ import {
 import { intl } from './IntlProvider';
 import AdvisorySeverity from '../PresentationalComponents/AdvisorySeverity/AdvisorySeverity';
 import { CveItem } from './api/vulnerabilityApi';
-import { AdvisoryItem, ListMeta, PackageItem, SystemPackageItem } from './api/patchApiTypes';
+import { AdvisoryItem, AdvisorySystemAttributes, ListMeta, PackageItem, PackageSystemItem, ResponseItem, SystemAttributes, SystemPackageItem } from './api/patchApiTypes';
 import { SystemAdvisoryItem } from './api/patchApiTypes';
 
 export interface TCells<T = never> {
@@ -190,86 +190,95 @@ export const createSystemAdvisoriesRows = (
   }
 };
 
-export const createSystemsRows = (rows, selectedRows = {}) => {
-  const data = rows.map(({ id, ...rest }) => {
+export interface SystemOS {
+  osName: string;
+  rhsm: string;
+}
+
+export type SystemItemFlat = ResponseItem<never> & SystemAttributes
+type SystemsRow = SystemItemFlat & {
+  key: string;
+  applicable_advisories: number[];
+  operating_system: SystemOS
+  selected: boolean;
+  updated: string | null;
+}
+export type SystemsRows = SystemsRow[]
+
+export const createSystemsRows = (rows: SystemItemFlat[] | SystemsRows, selectedRows: SelectedRows = {}): SystemsRows => {
+  const data = rows.map((row: SystemItemFlat | SystemsRow) => {
     const {
-      packages_installed: installedPckg,
+      id,
       rhba_count: rhba,
       rhsa_count: rhsa,
       rhea_count: rhea,
       other_count: other,
       os,
       rhsm,
-      tags,
       last_upload: lastUpload,
-    } = rest;
+    } = row;
     return {
-      id,
-      ...rest,
+      ...row,
       key: Math.random().toString() + id,
-      packages_installed: installedPckg,
       applicable_advisories: [rhea || 0, rhba || 0, rhsa || 0, other || 0],
       operating_system: {
         osName: os || 'N/A',
         rhsm,
       },
       selected: selectedRows[id] !== undefined,
-      tags,
       updated: lastUpload,
     };
   });
   return data || [];
 };
 
-export const createPackageSystemsRows = (rows, selectedRows = {}) => {
-  const data =
-    rows &&
-    rows.map((row) => ({
-      id: row.id,
-      groups: row.groups,
-      key: Math.random().toString() + row.id,
-      display_name: row.display_name,
-      installed_evra: row.installed_evra,
-      available_evra: row.updatable ? row.available_evra : row.installed_evra,
-      disableSelection: !row.updatable,
-      updatable: row.updatable,
-      update_status: row.update_status,
-      selected: selectedRows[row.id] !== undefined,
-      tags: row.tags,
-      os: {
-        osName: row.os?.osName || row.os || 'N/A',
-        rhsm: row.rhsm,
-      },
-      template_name: row.template_name,
-      template_uuid: row.template_uuid,
-      satellite_managed: row.satellite_managed,
-    }));
+type PackageSystemsRow = Omit<PackageSystemItem, 'os'> & {
+  key: string;
+  disableSelection: boolean;
+  selected: boolean;
+  os: SystemOS;
+}
+export type PackageSytemsRows = PackageSystemsRow[]
+
+export const createPackageSystemsRows = (rows: PackageSystemItem[] | PackageSytemsRows, selectedRows: SelectedRows = {}): PackageSytemsRows => {
+  const data = rows.map((row) => {
+      const { id, installed_evra, available_evra, updatable, os, rhsm } = row
+      return {
+        ...row,
+        key: Math.random().toString() + id,
+        available_evra: updatable ? available_evra : installed_evra,
+        disableSelection: !updatable,
+        selected: selectedRows[id] !== undefined,
+        os: {
+          osName: os?.osName || os || 'N/A',
+          rhsm: rhsm,
+        },
+      }
+    });
   return data || [];
 };
 
-export const createAdvisorySystemsRows = (rows, selectedRows = {}) => {
-  const data = rows.map(({ id, ...rest }) => {
-    const {
-      groups,
-      packages_installed: installedPckg,
-      os,
-      rhsm,
-      tags,
-      last_upload: lastUpload,
-      status,
-    } = rest;
+export type AdvisorySystemItemFlat = ResponseItem<never> & AdvisorySystemAttributes
+type AdvisorySystemsRow = Omit<AdvisorySystemItemFlat, 'os'> & {
+  key: string;
+  os: SystemOS;
+  selected: boolean;
+  updated: string|null;
+  disableSelection: boolean;
+}
+export type AdvisorySystemsRows = AdvisorySystemsRow[]
+
+export const createAdvisorySystemsRows = (rows: AdvisorySystemItemFlat[] | AdvisorySystemsRows, selectedRows: SelectedRows = {}): AdvisorySystemsRows => {
+  const data = rows.map((row) => {
+    const { id, os, rhsm, last_upload: lastUpload, status } = row;
     return {
-      id,
-      groups,
-      ...rest,
+      ...row,
       key: Math.random().toString() + id,
-      packages_installed: installedPckg,
       os: {
         osName: os.osName || os || 'N/A',
         rhsm,
       },
       selected: selectedRows[id] !== undefined,
-      tags,
       updated: lastUpload,
       disableSelection: status !== 'Installable',
     };

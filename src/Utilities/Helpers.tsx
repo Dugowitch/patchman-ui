@@ -33,6 +33,7 @@ import { generateFilter } from '@redhat-cloud-services/frontend-components-utili
 import { InsightsLink } from '@redhat-cloud-services/frontend-components/InsightsLink';
 import { InventoryWorkloads, OSFilter__InventoryTable } from './SystemsHelpers';
 import { CvesRows } from './DataMappers';
+import { PackageSystemItem, PackageSystemsResponse } from './api/patchApiTypes';
 
 export const removeUndefinedObjectItems = <T,>(originalObject: T): T => {
   const newObject = JSON.parse(JSON.stringify(originalObject));
@@ -704,8 +705,8 @@ export const filterRemediatableSystems = (result) => ({
   }),
 });
 
-export const filterRemediatablePackageSystems = (result) => ({
-  data: result.data.filter((system) => system.updatable),
+export const filterRemediatablePackageSystems = (result: PackageSystemsResponse): Pick<PackageSystemsResponse, 'data'> => ({
+  data: result.data.filter((system: PackageSystemItem) => system.updatable),
 });
 
 export const persistantParams = (patchParams, decodedParams) => {
