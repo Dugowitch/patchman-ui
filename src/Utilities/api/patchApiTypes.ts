@@ -1,4 +1,4 @@
-import { AdvisoryStatus, AdvisoryType, Severity } from "../constants";
+import { AdvisoryStatus, AdvisoryType, Severity, UpdateStatus } from "../constants";
 
 // API response common ======================================================== 
 
@@ -71,3 +71,39 @@ export interface SystemAdvisoryAtributes extends AdvisoryAtributesCommon {
 export type SystemAdvisoryItem = ResponseItem<SystemAdvisoryAtributes>
 
 export type SystemAdvisoriesResponse = Response<SystemAdvisoryItem>
+
+// packages specific ==========================================================
+
+export interface PackageItem {
+  name: string
+	summary: string
+	systems_installed: number
+	systems_installable: number
+	systems_applicable: number
+}
+
+export type PackagesResponse = Response<PackageItem>
+
+// system packages common =====================================================
+
+export interface SystemPackageAttributes {
+  name: string
+	evra: string
+	summary: string
+	description: string
+	updatable: boolean
+	update_status: UpdateStatus
+}
+
+// system packages specific ===================================================
+
+export interface PackageUpdate {
+  evra: string
+	status: string
+}
+
+export interface SystemPackageItem extends SystemPackageAttributes {
+  updates: PackageUpdate[] | null
+}
+
+export type SystemPackagesResponse = Response<SystemPackageItem>

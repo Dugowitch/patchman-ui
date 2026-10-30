@@ -21,7 +21,7 @@ import {
 import { intl } from './IntlProvider';
 import AdvisorySeverity from '../PresentationalComponents/AdvisorySeverity/AdvisorySeverity';
 import { CveItem } from './api/vulnerabilityApi';
-import { AdvisoryItem, ListMeta } from './api/patchApiTypes';
+import { AdvisoryItem, ListMeta, PackageItem, SystemPackageItem } from './api/patchApiTypes';
 import { SystemAdvisoryItem } from './api/patchApiTypes';
 
 export interface TCells<T = never> {
@@ -277,7 +277,9 @@ export const createAdvisorySystemsRows = (rows, selectedRows = {}) => {
   return data || [];
 };
 
-export const createSystemPackagesRows = (rows, selectedRows = {}) => {
+export type SystemPackagesRows = TRow[] | [TEmptyRow];
+
+export const createSystemPackagesRows = (rows: SystemPackageItem[], selectedRows: SelectedRows = {}): SystemPackagesRows => {
   if (rows && rows.length !== 0) {
     return rows.map((pkg) => {
       const pkgNEVRA = `${pkg.name}-${pkg.evra}`;
@@ -317,7 +319,9 @@ export const createSystemPackagesRows = (rows, selectedRows = {}) => {
   }
 };
 
-export const createPackagesRows = (rows) => {
+export type PackagesRows = TRow[] | [TEmptyRow];
+
+export const createPackagesRows = (rows: PackageItem[]): PackagesRows => {
   if (rows && rows.length !== 0) {
     return rows.map((pkg) => ({
       id: pkg.name,
