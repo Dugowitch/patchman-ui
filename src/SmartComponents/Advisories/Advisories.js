@@ -62,7 +62,7 @@ const Advisories = () => {
   const selectedRows = useSelector(({ AdvisoryListStore }) => AdvisoryListStore.selectedRows);
   const metadata = useSelector(({ AdvisoryListStore }) => AdvisoryListStore.metadata);
   const status = useSelector(({ AdvisoryListStore }) => AdvisoryListStore.status);
-  const areAllSelected = useSelector(({ SystemsStore }) => SystemsStore?.areAllSelected);
+  const areAllSelected = useSelector(({ AdvisoryListStore }) => AdvisoryListStore?.areAllSelected);
 
   const rows = useMemo(
     () => createAdvisoriesRows(advisories, expandedRows, selectedRows),
