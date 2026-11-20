@@ -3,7 +3,7 @@ import staleFilter from '../PresentationalComponents/Filters/SystemStaleFilter';
 import systemsUpdatableFilter from '../PresentationalComponents/Filters/SystemsUpdatableFilter';
 import systemsWorkloadFilter from '../PresentationalComponents/Filters/WorkloadFilter';
 import { ReactNode } from 'react';
-import { defaultCompoundSortValues, Filter, FilterEntries, ValueLabel } from './constants';
+import { defaultCompoundSortValues, Filter, FilterEntries, SBool, ValueLabel } from './constants';
 
 export interface InventoryWorkloads {
   sap_system?: boolean;
@@ -37,7 +37,7 @@ export interface FilterConfigItem {
   type: string;
   filterValues: {
     onChange: (event: unknown, value: string) => void;
-    items: ValueLabel[];
+    items: Array<ValueLabel | ValueLabel<SBool>>;
     value: string;
     placeholder: string;
   };

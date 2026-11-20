@@ -7,6 +7,7 @@ import messages from '../../Messages';
 import { CardTitle, Skeleton, Card, Grid, CardBody, CardHeader } from '@patternfly/react-core';
 import { Main } from '@redhat-cloud-services/frontend-components/Main';
 import { fetchSystems } from '../../Utilities/api/api';
+import { SBool } from '../../Utilities/constants';
 import IconWithLabel from '../Snippets/IconWithLabel';
 
 import './Card.css';
@@ -76,14 +77,14 @@ const SystemsStatusReport = ({ apply, queryParams }) => {
           color='var(--pf-t--global--icon--color--status--success--default)'
           value={subtotals?.patched}
           apply={apply}
-          filter={{ filter: { packages_updatable: 'eq:0', stale: false } }}
+          filter={{ filter: { packages_updatable: 'eq:0', stale: SBool.false } }}
         />
         <StatusCard
           title={intl.formatMessage(messages.labelsStatusSystemsWithPatchesAvailable)}
           Icon={BundleIcon}
           value={subtotals?.unpatched}
           apply={apply}
-          filter={{ filter: { packages_updatable: 'gt:0', stale: false } }}
+          filter={{ filter: { packages_updatable: 'gt:0', stale: SBool.false } }}
         />
         <StatusCard
           title={intl.formatMessage(messages.labelsStatusStaleSystems)}
@@ -91,7 +92,7 @@ const SystemsStatusReport = ({ apply, queryParams }) => {
           color='var(--pf-t--global--icon--color--status--warning--default)'
           value={subtotals?.stale}
           apply={apply}
-          filter={{ filter: { stale: true } }}
+          filter={{ filter: { stale: SBool.true } }}
         />
       </Grid>
     </Main>

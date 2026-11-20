@@ -11,16 +11,14 @@ const systemsStaleFilter = (apply, currentFilter = {}) => {
     () =>
       staleSystems.map(({ value, label }) => ({
         label,
-        value: value.toString(),
+        value,
       })),
     [],
   );
 
   const currentValueStringType =
     currentValue &&
-    ((Array.isArray(currentValue) && currentValue.map((value) => value.toString())) || [
-      currentValue.toString(),
-    ]);
+    ((Array.isArray(currentValue) && currentValue) || [currentValue]);
 
   const filterByStale = (value) => {
     apply({ filter: { stale: value } });

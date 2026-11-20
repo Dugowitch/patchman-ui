@@ -40,6 +40,7 @@ import {
   AdditionalQueryParams,
   FilterCategory,
   QueryParams,
+  SBool,
 } from './constants';
 import { intl } from './IntlProvider';
 import { generateFilter } from '@redhat-cloud-services/frontend-components-utilities/helpers';
@@ -526,7 +527,7 @@ export const getActiveFilterState = (
 
 export interface Chip {
   name: string
-  id?: string
+  id?: string | SBool | Severity
   value: FilterValue1
 }
 
@@ -561,16 +562,25 @@ const buildChips = (filters: FilterEntries, category: string): Chip[] => {
     }));
   }
 
-  const { values } = filterCategories[category];
-  return ([] as FilterValue2).concat(rawValue).map((filterValue) => {
-    const match = values.find(
+  const foo: FilterCategory | undefined = filterCategories[category];
+  if (foo === undefined || foo.values === undefined) {
+    return []
+  }
+  
+  return ([] as FilterValue2).concat(rawValue).flatMap((filterValue) => {
+    const match = foo.values!.find(
       (item) => getFilterStringFromApi(item.value) === getFilterStringFromApi(filterValue),
     );
-    return {
+
+    if (!match) {
+      return [];
+    }
+
+    return [{
       name: match.label,
       value: filterValue,
       id: match.value,
-    };
+    }];
   });
 };
 

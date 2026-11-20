@@ -11,16 +11,14 @@ const rebootFilter = (apply, currentFilter = {}) => {
     () =>
       rebootRequired.map(({ value, label }) => ({
         label,
-        value: value.toString(),
+        value,
       })),
     [],
   );
 
   const currentValueStringType =
     currentValue &&
-    ((Array.isArray(currentValue) && currentValue.map((value) => value.toString())) || [
-      currentValue.toString(),
-    ]);
+    ((Array.isArray(currentValue) && currentValue) || [currentValue]);
 
   const filterByReboot = (value) => {
     apply({ filter: { reboot_required: value } });
