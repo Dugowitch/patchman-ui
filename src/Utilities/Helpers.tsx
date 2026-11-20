@@ -329,7 +329,6 @@ const calculateWorkloads = (systemProfile: InventoryWorkloads): string => {
 
 export interface URLParams extends BaseQueryParams, AdditionalQueryParams, DefaultPaginationQueryParams {
   id?: string;
-  group_name?: string;
   package_name?: string
 }
 
@@ -355,11 +354,11 @@ export const encodeParams = (parameters: URLParams, shouldTranslateKeys: boolean
     return result;
   };
 
-  let { filter, systemProfile = {}, group_name, ...allParams } = parameters;
+  let { filter, systemProfile = {}, ...allParams } = parameters;
 
   allParams = {
     ...allParams,
-    ...flattenFilters({ ...filter, ...(group_name ? { group_name } : {}) }, shouldTranslateKeys),
+    ...flattenFilters(filter, shouldTranslateKeys),
   };
   let params: string[] = [];
   Object.keys(allParams).forEach((key) => {
