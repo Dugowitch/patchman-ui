@@ -394,26 +394,46 @@ export const encodeURLParams = (parameters: URLParams): string => {
   return encodeParams(removeUndefinedObjectItems(urlParams), false);
 };
 
-export const decomposeFilterValue = <T, >(filterValue: T, parser: ((x: T) => any) | undefined): any => {
+type ParserFn = (x: string|string[]|null) => FilterValue
+
+export const decomposeFilterValue = (filterValue: string|string[]|null, parser?: ParserFn): FilterValue => {
   if (parser) {
     return parser(filterValue);
   } else if (typeof filterValue === 'string' && filterValue.startsWith('in:')) {
     const values = filterValue.slice(3);
     return values.split(',');
-  } else {
-    return filterValue;
   }
+  return filterValue;
 };
 
-const getApiValueFromFilterString = (value: unknown) => {
-  if (Array.isArray(value)) {
-    return value.map(getApiValueFromFilterString);
+const severityParamParser = (x: string|string[]|null): Severity | Severity[] => {
+  if (typeof x === 'string' && x.startsWith('in:')) {
+    return severityParamParser(x.slice(3).split(","))
   }
 
-  return value === 'null' ? null : value;
-};
+  if (Array.isArray(x)) {
+    return x.reduce<Severity[]>((acc, val) => {
+      const ret = severityParamParser(val)
+      if (!Array.isArray(ret)){ // could be an empty array if invalid severity was provided
+        acc.push(ret)
+      }
+      return acc
+    }, [])
+  }
 
-export const decodeQueryparams = (queryString: string, parsers: Record<string, (x: unknown) => any> = {}): Partial<BaseQueryParams & (DefaultPaginationQueryParams | SystemPaginationQueryParams)> => {
+  if (x === 'null' || x === null) {
+    return null
+  }
+
+  const n = parseInt(x) 
+  if (n > 0 && n <=4 ){
+    return n as Severity
+  }
+
+  return []
+}
+
+export const decodeQueryparams = (queryString: string, parsers: Record<string, ParserFn> = {}): Partial<BaseQueryParams & (DefaultPaginationQueryParams | SystemPaginationQueryParams)> => {
   const parsed = qs.parse(queryString);
   const res = {};
   for (const key in parsed){
@@ -432,13 +452,16 @@ export const decodeQueryparams = (queryString: string, parsers: Record<string, (
 
     const objParent = key.slice(0, bracketIndex);
     const objKey = key.slice(bracketIndex + 1, -1);
-    const parser = parsers[objKey];
-    const decomposedValue = decomposeFilterValue(typeHandledParam, parser);
-    const normalizedValue =
-      objParent === 'filter' ? getApiValueFromFilterString(decomposedValue) : decomposedValue;
+
+    let parser = parsers[objKey]
+    if (objKey === "severity" && !parser) {
+      parser = severityParamParser
+    }
+
+    const decomposedValue = decomposeFilterValue(parsed[key], parser);
     res[objParent] = {
       ...res[objParent],
-      [objKey]: normalizedValue,
+      [objKey]: decomposedValue,
     };
   }
   return res;

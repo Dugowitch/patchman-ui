@@ -258,17 +258,17 @@ describe('Helpers tests', () => {
   });
 
   it.each`
-    parameters                               | shouldTranslate | result
-    ${{ search: 'trolo' }}                   | ${true}         | ${'?search=trolo'}
-    ${{ search: '' }}                        | ${true}         | ${'?'}
-    ${{ filter: { advisory_type: 2 } }}      | ${false}        | ${'?filter%5Badvisory_type%5D=2'}
-    ${{ filter: { advisory_type: [1, 2] } }} | ${true}         | ${'?filter%5Badvisory_type%5D=in%3A1%2C2'}
-    ${{ filter: { severity: null } }}        | ${false}        | ${'?filter%5Bseverity%5D=null'}
-    ${{ filter: { severity: [1, 2, null] } }} | ${false}      | ${'?filter%5Bseverity%5D=in%3A1%2C2%2Cnull'}
+    parameters                                    | shouldTranslate | result
+    ${{ search: 'trolo' }}                        | ${true}         | ${'?search=trolo'}
+    ${{ search: '' }}                             | ${true}         | ${'?'}
+    ${{ filter: { advisory_type_name: 2 } }}      | ${false}        | ${'?filter%5Badvisory_type_name%5D=2'}
+    ${{ filter: { advisory_type_name: [1, 2] } }} | ${true}         | ${'?filter%5Badvisory_type_name%5D=in%3A1%2C2'}
+    ${{ filter: { severity: null } }}             | ${false}        | ${'?filter%5Bseverity%5D=null'}
+    ${{ filter: { severity: [1, 2, null] } }}     | ${false}        | ${'?filter%5Bseverity%5D=in%3A1%2C2%2Cnull'}
     ${{
-  filter: { advisory_type: [1, 2] },
+  filter: { advisory_type_name: [1, 2] },
   param: 'text',
-}} | ${true} | ${'?param=text&filter%5Badvisory_type%5D=in%3A1%2C2'}
+}} | ${true} | ${'?param=text&filter%5Badvisory_type_name%5D=in%3A1%2C2'}
   `(
     'encodeParams: Should encode parameters $parameters',
     ({ parameters, shouldTranslate, result }) => {
@@ -277,12 +277,12 @@ describe('Helpers tests', () => {
   );
 
   it.each`
-    parameters                                           | result
-    ${'search=trolo'}                                    | ${{ search: 'trolo' }}
-    ${'filter%5Badvisory_type%5D=2'}                     | ${{ filter: { advisory_type: 2 } }}
-    ${'param=text&filter%5Badvisory_type%5D=in%3A1%2C2'} | ${{ filter: { advisory_type: ['1', '2'] }, param: 'text' }}
-    ${'filter%5Bseverity%5D=null'}                        | ${{ filter: { severity: null } }}
-    ${'filter%5Bseverity%5D=in%3A1%2C2%2Cnull'}           | ${{ filter: { severity: ['1', '2', null] } }}
+    parameters                                                            | result
+    ${'search=trolo'}                                                     | ${{ search: 'trolo' }}
+    ${'filter%5Badvisory_type_name%5D=bugfix'}                            | ${{ filter: { advisory_type_name: "bugfix" } }}
+    ${'param=text&filter%5Badvisory_type_name%5D=in%3Abugfix%2Csecurity'} | ${{ filter: { advisory_type_name: ["bugfix", "security"] }, param: 'text' }}
+    ${'filter%5Bseverity%5D=null'}                                        | ${{ filter: { severity: null } }}
+    ${'filter%5Bseverity%5D=in%3A1%2C2%2Cnull'}                           | ${{ filter: { severity: [1, 2, null] } }}
   `('decodeQueryparams: Should decodeQueryParams $parameters', ({ parameters, result }) => {
     expect(decodeQueryparams(parameters)).toEqual(result);
   });

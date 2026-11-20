@@ -80,9 +80,9 @@ export const useRemoveFilter = (filters, callback, defaultFilters = { filter: {}
 
         if (categoryId !== 'search' && !multiValueFilters.includes(categoryId)) {
           let activeFilter = filters[categoryId];
-          const toRemove = chips.map((item) => item.id?.toString());
+          const toRemove = chips.map((item) => item.id);
           if (Array.isArray(activeFilter)) {
-            const nextValue = activeFilter.filter((item) => !toRemove.includes(item.toString()));
+            const nextValue = activeFilter.filter((item) => !toRemove.includes(item));
             newParams.filter[categoryId] =
               nextValue.length > 0 ? nextValue : defaultFilterState[categoryId];
           } else {
