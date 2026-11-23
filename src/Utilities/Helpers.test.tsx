@@ -29,15 +29,6 @@ import {
 } from './Helpers';
 import { render } from '@testing-library/react';
 
-const TestHook = ({ callback }) => {
-  callback();
-  return null;
-};
-
-export const testHook = (callback) => {
-  mount(<TestHook callback={callback} />);
-};
-
 describe('Helpers tests', () => {
   let header = [
     {
@@ -486,6 +477,7 @@ describe('Test global filters', () => {
 
 describe('persistantParams', () => {
   it('should translate descoded desc group sort parameter correctly', () => {
+    // @ts-expect-error
     expect(persistantParams({}, { sort: '-groups' })).toEqual({
       page: 1,
       perPage: 20,
@@ -497,6 +489,7 @@ describe('persistantParams', () => {
   });
 
   it('should translate descoded asc group sort parameter correctly', () => {
+    // @ts-expect-error
     expect(persistantParams({}, { sort: 'groups' })).toEqual({
       page: 1,
       perPage: 20,
@@ -508,6 +501,7 @@ describe('persistantParams', () => {
   });
 
   it('should translate other descoded desc sort parameter correctly', () => {
+    // @ts-expect-error
     expect(persistantParams({}, { sort: '-abc' })).toEqual({
       page: 1,
       perPage: 20,
@@ -519,6 +513,7 @@ describe('persistantParams', () => {
   });
 
   it('should translate other descoded asc sort parameter correctly', () => {
+    // @ts-expect-error
     expect(persistantParams({}, { sort: 'abc' })).toEqual({
       page: 1,
       perPage: 20,
@@ -537,10 +532,11 @@ describe('buildApiFilters', () => {
 
   it('combines patch and inventory filters into API params', () => {
     const inventoryFilters = {
-      inventoryFilter: 'inventoryValue',
+      hostGroupFilter: ["foo", "bar"]
     };
     expect(buildApiFilters(patchFilters, inventoryFilters)).toEqual({
       ...patchFilters,
+      group_name: ["foo", "bar"],
     });
   });
 
@@ -588,39 +584,39 @@ describe('wrappableEVRA', () => {
     const { container } = render(wrappableEVRA('1:2.3.4-5.el8.x86_64'));
     const span = container.querySelector('span');
     expect(span).not.toBeNull();
-    expect(span.style.overflowWrap).toBe('anywhere');
-    expect(span.textContent).toEqual('1:\u200B2.3.4\u200B-5.el8\u200B.x86_64');
+    expect(span?.style.overflowWrap).toBe('anywhere');
+    expect(span?.textContent).toEqual('1:\u200B2.3.4\u200B-5.el8\u200B.x86_64');
   });
 
   it('should handle EVRA without epoch correctly', () => {
     const { container } = render(wrappableEVRA('2.3.4-5.el8.x86_64'));
     const span = container.querySelector('span');
-    expect(span.textContent).toEqual('2.3.4\u200B-5.el8\u200B.x86_64');
+    expect(span?.textContent).toEqual('2.3.4\u200B-5.el8\u200B.x86_64');
   });
 
   it('should handle empty string with empty element', () => {
     const { container } = render(wrappableEVRA(''));
     const span = container.querySelector('span');
     expect(span).not.toBeNull();
-    expect(span.textContent).toEqual('\u200B');
+    expect(span?.textContent).toEqual('\u200B');
   });
 
   it('should use default empty string when no parameter provided', () => {
     const { container } = render(wrappableEVRA());
     const span = container.querySelector('span');
     expect(span).not.toBeNull();
-    expect(span.textContent).toEqual('\u200B');
+    expect(span?.textContent).toEqual('\u200B');
   });
 
   it('should handle version only (no release or architecture)', () => {
     const { container } = render(wrappableEVRA('1.0'));
     const span = container.querySelector('span');
-    expect(span.textContent).toEqual('1.0\u200B');
+    expect(span?.textContent).toEqual('1.0\u200B');
   });
 
   it('should handle unconventional versioning schemes', () => {
     const { container } = render(wrappableEVRA('2024.1-1.el8.x86_64'));
     const span = container.querySelector('span');
-    expect(span.textContent).toEqual('2024.1\u200B-1.el8\u200B.x86_64');
+    expect(span?.textContent).toEqual('2024.1\u200B-1.el8\u200B.x86_64');
   });
 });

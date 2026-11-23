@@ -91,10 +91,10 @@ export const createSortBy = (
   return sort;
 };
 
-export const addOrRemoveItemFromSet = <T,>(
-  targetObj: Record<string, T>,
-  inputArr: Array<{ rowId: string; value: T | false }>,
-): Record<string, T> => {
+export const addOrRemoveItemFromSet = <T extends string | number | symbol, U >(
+  targetObj: Record<T, U>,
+  inputArr: Array<{ rowId: T; value: U | false }>,
+): Record<T, U> => {
   const result = { ...targetObj }
   for (const {rowId, value} of inputArr) {
     if (value) {
@@ -117,10 +117,10 @@ export const getNewSelectedItems = (selectedItems: SelectedItems, currentItems: 
 };
 
 // for expandable rows only
-export const getRowIdByIndexExpandable = (
-  arrayOfObjects: Array<{ id: string }>,
+export const getRowIdByIndexExpandable = <T, >(
+  arrayOfObjects: Array<{ id: T }>,
   index: number,
-): string => arrayOfObjects[index / 2].id;
+): T => arrayOfObjects[index / 2].id;
 
 export const getOffsetFromPageLimit = (page: number, limit: number): number => page * limit - limit;
 

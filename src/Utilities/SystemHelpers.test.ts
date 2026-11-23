@@ -6,6 +6,7 @@ import {
   mergeInventoryColumns,
   workloadToSystemInventory,
 } from './SystemsHelpers';
+import { SBool } from './constants';
 
 describe('createSystemsSortBy,', () => {
   it('should translate main parameters', () => {
@@ -177,7 +178,7 @@ describe('workloadToSystemInventory', () => {
 describe('buildFilterConfig', () => {
   it('should return filter items for status, patch status, and workload', () => {
     const apply = jest.fn();
-    const filter = { stale: [true, false] };
+    const filter = { stale: [SBool.true, SBool.false] };
 
     const { result } = renderHook(() => buildFilterConfig(filter, apply));
     expect(result.current.items).toHaveLength(3);
