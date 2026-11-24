@@ -1,5 +1,5 @@
 import configureStore from 'redux-mock-store';
-import { systemRows } from '../../Utilities/RawDataForTesting.js';
+import { systemRows } from '../../Utilities/RawDataForTesting';
 import { initMocks } from '../../Utilities/unitTestingUtilities.js';
 import AdvisorySystems from './AdvisorySystems.js';
 import { InventoryTable } from '@redhat-cloud-services/frontend-components/Inventory';

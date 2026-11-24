@@ -1,6 +1,6 @@
 /* eslint-disable */
 import { SortByDirection } from '@patternfly/react-table';
-import { pageDefaultFilters, publicDateOptions, remediationIdentifiers } from '../Utilities/constants';
+import { pageDefaultFilters, publicDateOptions, remediationIdentifiers } from './constants';
 import {
   addOrRemoveItemFromSet,
   arrayFromObj,
