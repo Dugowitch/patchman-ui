@@ -3,7 +3,7 @@ import { SystemsStore } from './SystemsStore';
 import { PackageSystemsStore } from './PackageSystemsStore';
 import { systemRows, systemsStoreState } from '../../Utilities/RawDataForTesting';
 
-const state = { ...initialState, loaded: true, columns: [{ key: 'testCol' }], rows: systemRows };
+const state = { ...initialState, queryParams: { ...initialState.queryParams, sort: '-last_upload' }, rows: systemRows };
 
 describe('InventoryEntitiesReducer tests', () => {
   it('should change AdvisorySystemsStore nicely', () => {

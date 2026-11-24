@@ -195,7 +195,7 @@ export interface SystemOS {
   rhsm: string;
 }
 
-export type SystemItemFlat = ResponseItem<never> & SystemAttributes
+export type SystemItemFlat = Omit<ResponseItem<never>, 'attributes'> & SystemAttributes
 type SystemsRow = SystemItemFlat & {
   key: string;
   applicable_advisories: number[];
